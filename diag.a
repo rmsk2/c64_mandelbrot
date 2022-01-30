@@ -1,0 +1,83 @@
+
+HEX_CHARS
+!tx "0123456789ABCDEF"
+
+LO_NIBBLE
+!byte 0
+
+; --------------------------------------------------
+; This routine prints a fixed point number to the screen. The address
+; of the number has to be given in $0003/$0004
+;
+; The number of iterations performed is returned in NUM_ITER 
+; --------------------------------------------------
+printNumHex
+    ldy #0
+    lda ($03), y
+    bne .printMinus
+    lda #43
+    jsr $FFD2
+    jmp .egal
+.printMinus
+    lda #45
+    jsr $FFD2
+.egal
+
+    ldy #4
+.loopPrint
+    lda ($03), y
+    jsr printByte
+    dey
+    bne .loopPrint
+    jsr printCRLF
+    rts
+
+!macro printFixedPoint .addr {
+    lda #<.addr
+    sta $03
+    lda #>.addr
+    sta $04
+    jsr printNumHex
+} 
+
+printByteCRLF
+    jsr printByte
+    jsr printCRLF
+    rts
+
+printByte
+    jsr splitByte
+    stx LO_NIBBLE
+    tax
+    lda HEX_CHARS, X
+    jsr $FFD2
+    ldx LO_NIBBLE
+    lda HEX_CHARS, X
+    jsr $FFD2
+    rts
+
+printCRLF
+    lda #13
+    jsr $FFD2
+    lda #10
+    jsr $FFD2
+    rts
+
+.CONV_TEMP
+!byte 0
+; --------------------------------------------------
+; This routine splits the value in accu its nibbles. The lower nibble 
+; is returned in x and its upper nibble in the accu
+; --------------------------------------------------
+splitByte
+    sta .CONV_TEMP
+    and #$0F
+    tax
+    lda .CONV_TEMP
+    and #$F0
+    lsr
+    lsr 
+    lsr 
+    lsr
+    rts
+

@@ -1,0 +1,172 @@
+!to "arith", cbm
+*=$c000
+
+FAST_MUL = 1
+
+;toFloat(0x00200000), toFloat(0x00E00000)
+
+REAL
+!byte 0,0,0,$20,0
+
+IMAG
+!byte 0,0,0,$E0,0
+
+XN
+!byte 0,0,0,0,0
+
+YN
+!byte 0,0,0,0,0
+
+XN_OLD
+!byte 0,0,0,0,0
+
+COND1
+!byte 0,0,0,0,0
+
+TEMP
+!byte 0,0,0,0,0
+
+VAL_MAX
+!byte 0,1,0,0,4
+
+NUM_ITER
+!byte 0
+
+MAX_ITER
+!byte 255
+
+!zone arith
+!source "arith16.a"
+
+!zone diag
+!source "diag.a"
+
+!zone main
+
+
+; --------------------------------------------------
+; This routine test if calcualtion of the Mandelbrot sequence should be stopped.
+; It is stopped, when the iteration count reached MAX_ITER of the absolute value
+; of the current sequence value is larger than 4
+;
+; This routine returns a nonzero value if computation has to be stopped. The zero
+; flag is cleared in this case.
+; --------------------------------------------------
+testMandelbrotDone
+    lda NUM_ITER
+    cmp MAX_ITER
+    bne .testLimit
+    jmp .stopCalc
+
+.testLimit
+    ; *****************************
+    ; abs_val = xn*xn + yn*yn
+    ; *****************************
+
+    ; TEMP <= XN
+    +callFunc move32Bit, XN, TEMP
+    ; TEMP <= TEMP * TEMP
+    +callFunc mul32BitNormalized, TEMP, TEMP
+    ; COND1 <= YN
+    +callFunc move32Bit, YN, COND1
+    ; COND1 <= COND1 * COND1
+    +callFunc mul32BitNormalized, COND1, COND1
+    ; TEMP <= COND1 + TEMP
+    +callFunc add32Bit, COND1, TEMP
+
+    ; Carry is set if TEMP >= 4 + 1/2^24
+    +callFunc cmp32BitUnsigned, TEMP, VAL_MAX 
+    bcs .stopCalc
+.continueCalc
+    lda #0
+    rts
+.stopCalc
+    lda #1
+    rts
+
+; --------------------------------------------------
+; This routine calculates the Mandelbrot sequence for the complex value given through
+; REAL und IMAG.
+;
+; The number of iterations performed is returned in NUM_ITER 
+; --------------------------------------------------
+calcOneMandelbrotSequence
+    lda #1
+    sta NUM_ITER
+
+    ; REAL <= XN
+    +callFunc move32Bit, REAL, XN
+    ; YN <= IMAG
+    +callFunc move32Bit, IMAG, YN
+
+.loopMandelbrot
+    jsr testMandelbrotDone
+    beq .continueMandelbrot
+    jmp .endMandelbrot
+
+.continueMandelbrot
+    ;lda NUM_ITER
+    ;jsr printByteCRLF
+    ;+printFixedPoint XN
+    ;+printFixedPoint YN
+
+    ; XN_OLD <= XN
+    +callFunc move32Bit, XN, XN_OLD
+    
+    ; *****************************
+    ; xn+1 = xn*xn - yn*yn + real
+    ; *****************************
+
+    ; XN <= XN * XN
+    +callFunc mul32BitNormalized, XN, XN
+    ; TEMP <= YN
+    +callFunc move32Bit, YN, TEMP
+    ; TEMP <= TEMP * TEMP
+    +callFunc mul32BitNormalized, TEMP, TEMP
+    ; TEMP <= -TEMP
+    +callFuncMono neg32, TEMP
+    ; XN <= - TEMP + XN
+    +callFunc add32Bit, TEMP, XN
+    ; XN <= REAL + XN
+    +callFunc add32Bit, REAL, XN
+
+    ; *****************************
+    ; yn+1 = 2*xn*yn + imag
+    ; *****************************
+
+    ; YN <= XN_OLD * YN 
+    +callFunc mul32BitNormalized, XN_OLD, YN
+    ; YN <= 2*YN
+    +callFuncMono double32Bit, YN
+    ; YN <= IMAG + YN
+    +callFunc add32Bit, IMAG, YN 
+
+    inc NUM_ITER
+    jmp .loopMandelbrot
+
+.endMandelbrot
+    rts
+
+ARG1
+!byte 1,0,0,$c0,0
+ARG2
+!byte 0,0,0,$20,0
+DUMMY
+!byte 0 
+testAdd 
+    +printFixedPoint ARG1
+    +printFixedPoint ARG2
+    lda #0
+    sta DUMMY
+    +callFunc cmp32BitUnsigned, ARG1, ARG2
+    bcc .eval
+    lda #1
+    sta DUMMY
+.eval 
+    lda DUMMY
+    jsr printByteCRLF
+
+    +callFunc add32Bit, ARG1, ARG2
+    +printFixedPoint ARG2
+
+    rts
