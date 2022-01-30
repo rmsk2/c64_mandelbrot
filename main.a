@@ -6,10 +6,10 @@ FAST_MUL = 1
 ;toFloat(0x00200000), toFloat(0x00E00000)
 
 REAL
-!byte 0,0,0,$20,0
+!byte 0,2,0,0,0
 
 IMAG
-!byte 0,0,0,$E0,0
+!byte 0,3,0,0,0
 
 XN
 !byte 0,0,0,0,0
@@ -105,8 +105,7 @@ calcOneMandelbrotSequence
     jmp .endMandelbrot
 
 .continueMandelbrot
-    ;lda NUM_ITER
-    ;jsr printByteCRLF
+    ;+printByteLN NUM_ITER
     ;+printFixedPoint XN
     ;+printFixedPoint YN
 

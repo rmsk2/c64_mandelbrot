@@ -81,3 +81,7 @@ splitByte
     lsr
     rts
 
+!macro printByteLN .addr {
+    lda .addr
+    jsr printByteCRLF
+}
