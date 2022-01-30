@@ -185,7 +185,7 @@ initMandel
 
 nextMandel
     jsr calcOneMandelbrotSequence
-    ; REAL <= STEP_X, REAL
+    ; REAL <= STEP_X + REAL
     +callFunc add32Bit, STEP_X, REAL
     +inc16Bit COUNT_X
     +cmp16Bit COUNT_X, MAX_X
