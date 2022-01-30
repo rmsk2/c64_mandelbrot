@@ -661,6 +661,8 @@ restoreSavedZeroPageData
 .restoreLoop
     lda SAVED_ZERO_PAGE_DATA,y
     sta $F7, y
+    dey
+    bpl .restoreLoop
     lda SAVED_ZERO_PAGE_DATA+8
     sta $9E
     lda SAVED_ZERO_PAGE_DATA+9
