@@ -85,3 +85,27 @@ splitByte
     lda .addr
     jsr printByteCRLF
 }
+
+ARG1
+!byte 1,0,0,$c0,0
+ARG2
+!byte 0,0,0,$20,0
+DUMMY
+!byte 0 
+testAdd 
+    +printFixedPoint ARG1
+    +printFixedPoint ARG2
+    lda #0
+    sta DUMMY
+    +callFunc cmp32BitUnsigned, ARG1, ARG2
+    bcc .eval
+    lda #1
+    sta DUMMY
+.eval 
+    lda DUMMY
+    jsr printByteCRLF
+
+    +callFunc add32Bit, ARG1, ARG2
+    +printFixedPoint ARG2
+
+    rts

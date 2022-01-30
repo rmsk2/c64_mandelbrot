@@ -3,13 +3,41 @@
 
 FAST_MUL = 1
 
-;toFloat(0x00200000), toFloat(0x00E00000)
-
 REAL
 !byte 0,2,0,0,0
 
 IMAG
 !byte 0,3,0,0,0
+
+MAX_ITER
+!byte 64
+
+NUM_ITER
+!byte 0
+
+STEP_X
+!byte 0, 0, $c0, 0, 0
+
+STEP_Y
+!byte 0, $AA, $AA, 0, 0
+
+INIT_REAL
+!byte 1, 0, 0, 0, 2
+
+INIT_IMAG
+!byte 0, 0, 0, 0, 1
+
+COUNT_X
+!byte 0, 0
+
+COUNT_Y
+!byte 0
+
+MAX_X
+!byte 0,0 
+
+MAX_Y 
+!byte 0
 
 XN
 !byte 0,0,0,0,0
@@ -28,12 +56,6 @@ TEMP
 
 VAL_MAX
 !byte 0,1,0,0,4
-
-NUM_ITER
-!byte 0
-
-MAX_ITER
-!byte 255
 
 !zone arith
 !source "arith16.a"
@@ -146,26 +168,33 @@ calcOneMandelbrotSequence
 .endMandelbrot
     rts
 
-ARG1
-!byte 1,0,0,$c0,0
-ARG2
-!byte 0,0,0,$20,0
-DUMMY
-!byte 0 
-testAdd 
-    +printFixedPoint ARG1
-    +printFixedPoint ARG2
+initMandel
+    ; set limits
+    +load16BitImmediate 320, MAX_X
+    lda #200
+    sta MAX_Y
+    ; set start values
+    +load16BitImmediate 0, COUNT_X
     lda #0
-    sta DUMMY
-    +callFunc cmp32BitUnsigned, ARG1, ARG2
-    bcc .eval
-    lda #1
-    sta DUMMY
-.eval 
-    lda DUMMY
-    jsr printByteCRLF
+    sta COUNT_Y
+    ; reset complex numbers
+    +callFunc move32Bit, INIT_REAL, REAL
+    +callFunc move32Bit, INIT_IMAG, IMAG
 
-    +callFunc add32Bit, ARG1, ARG2
-    +printFixedPoint ARG2
+    rts
 
+nextMandel
+    jsr calcOneMandelbrotSequence
+    ; REAL <= STEP_X, REAL
+    +callFunc add32Bit, STEP_X, REAL
+    +inc16Bit COUNT_X
+    +cmp16Bit COUNT_X, MAX_X
+    bne .done
+    +load16BitImmediate 0, COUNT_X
+    ; REAL <= INIT_REAL
+    +callFunc move32Bit, INIT_REAL, REAL
+    ; IMAG <= STEP_Y + IMAG
+    +callFunc add32Bit, STEP_Y, IMAG
+    inc COUNT_Y
+.done
     rts
