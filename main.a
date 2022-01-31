@@ -10,7 +10,7 @@ IMAG
 !byte 0,3,0,0,0
 
 MAX_ITER
-!byte 64
+!byte 24
 
 PIC_COLOURS
 !byte $05
@@ -251,7 +251,7 @@ mandelLoop
 .loopUntilFinished
     jsr nextMandel
     lda COUNT_Y
-    cmp #200
+    cmp MAX_Y
     bne .loopUntilFinished
 
     jsr deInitHires
