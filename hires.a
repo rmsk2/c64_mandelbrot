@@ -105,7 +105,7 @@ PLOT_POS_Y
 
 ; source: https://www.retro-programming.de/programming/nachschlagewerk/vic-ii/vic-ii-grafikmodes-bitmap-hi-res/
 ; --------------------------------------------------
-; This routine sets a point in thr hires bitmap. 
+; This routine sets a point in the hires bitmap. 
 ; 
 ; PLOT_POS_X            has to contain the x position of the point
 ; PLOT_POS_Y            has to contain the y position of the point
