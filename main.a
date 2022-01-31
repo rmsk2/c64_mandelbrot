@@ -13,16 +13,16 @@ MAX_ITER
 !byte 64
 
 PIC_COLOURS
-!byte $01
+!byte $05
 
 NUM_ITER
 !byte 0
 
 STEP_X
-!byte 0, 0, $c0, 0, 0
+!byte 0, $66, $66, $02, $00
 
 STEP_Y
-!byte 1, $AA, $AA, 0, 0
+!byte 1, $5C, $8F, $02, $00
 
 INIT_REAL
 !byte 1, 0, 0, 0, 2
@@ -173,6 +173,11 @@ calcOneMandelbrotSequence
 .endMandelbrot
     rts
 
+; --------------------------------------------------
+; This routine initialises the data needed for computation
+;
+; initMandel has no return value. 
+; --------------------------------------------------
 initMandel
     ; set limits
     +load16BitImmediate 320, MAX_X
@@ -188,6 +193,15 @@ initMandel
 
     rts
 
+
+; --------------------------------------------------
+; This routine performs all necessary calculations for one point in the
+; complex plane. Calling this routine repeatedly calculates and draws the
+; selected rectangular part of the Mandelbrot set. If COUNT_Y reaches 200
+; all pixels have been drawn.
+;
+; nextMandel has no return value. 
+; --------------------------------------------------
 nextMandel
     +move16Bit COUNT_X, PLOT_POS_X
     lda COUNT_Y
