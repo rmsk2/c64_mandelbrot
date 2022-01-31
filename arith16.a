@@ -249,7 +249,8 @@ ADDR_OPER_RIGHT
 !byte 0,0
 
 ; --------------------------------------------------
-; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
+; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and adds its operands. This routine ignores the sign byte.
 ;
 ; The result is returned in the second operand, i.e. *opR <- *opL + *opR 
 ; --------------------------------------------------
@@ -277,8 +278,8 @@ add32BitUnsignedInternal
     rts
 
 ; --------------------------------------------------
-; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
-; The caller has to ensure that *opL >= *opR
+; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and subtracts its operands. The caller has to ensure that *opL >= *opR
 ;
 ; The result is returned in the second operand, i.e. *opR <- *opL - *opR 
 ; --------------------------------------------------
@@ -305,8 +306,8 @@ sub32BitUnsignedInternal
     rts
 
 ; --------------------------------------------------
-; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
-; The caller has to ensure that *opR >= *opL
+; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and subtracts its operands. The caller has to ensure that *opR >= *opL. This routine ignores the sign bytes.
 ;
 ; The result is returned in the second operand, i.e. *opR <- *opR - *opL 
 ; --------------------------------------------------
@@ -343,6 +344,7 @@ HELP_MUL
 !byte 0
 ; --------------------------------------------------
 ; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
+; It multiplies its operands as if they were unsigned 32 bit integers.
 ;
 ; The result is returned in the address to which ARITH_SCRATCH9/ARITH_SCRATCH10 points 
 ; --------------------------------------------------
@@ -412,7 +414,8 @@ mul32BitUnsignedInternal
 
 
 ; --------------------------------------------------
-; This subroutine pulls the addresses of the two operands from the parameter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
+; This subroutine pulls the addresses of the two operands from the parameter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and multplies them. This routine ignores the sign bytes.
 ;
 ; It then multiplies the result and normalizes it as a fixed point value of the correct format
 ; of 8 bits before the comma and 24 after the comma. The result is stored in the address given by ARITH_SCRATCH7
@@ -435,7 +438,8 @@ mul32BitNormalizedUnsignedInternal
     rts
 
 ; --------------------------------------------------
-; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
+; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and compares its two operands. This routine ignores the sign byte it only compares the absolute values.
 ;
 ; The result is returned in the carry flag. Its is set if *opL >= *opR 
 ; --------------------------------------------------
@@ -496,7 +500,8 @@ TEMP_SHIFT
 !byte 0
 ; --------------------------------------------------
 ; This subroutine pulls the address of its operand from the parameter blocks ADDR_OPER_LEFT
-; The routine then doubles the value of its operand by simply performing a left shift
+; The routine then doubles the value of its operand by simply performing a left shift. It
+; ignores the sign byte.
 ;
 ; The operand is modified, i.e. *op <- 2 * *op 
 ; --------------------------------------------------
@@ -668,8 +673,14 @@ mul32BitNormalized
 SAVED_ZERO_PAGE_DATA
 !byte 0,0,0,0,0,0,0,0,0,0
 
+; --------------------------------------------------
+; This subroutine saves the contents of all zero page bytes that are modified by
+; the fixed point arithmetic.
+;
+; The routine returns no result. 
+; --------------------------------------------------
 saveZeroPageMem
-    ldy #8
+    ldy #7
 .saveLoop
     lda $F7, y
     sta SAVED_ZERO_PAGE_DATA, y
@@ -681,8 +692,14 @@ saveZeroPageMem
     sta SAVED_ZERO_PAGE_DATA + 9
     rts
 
+; --------------------------------------------------
+; This subroutine restores the contents of all zero page bytes that are modified by
+; the fixed point arithmetic.
+;
+; The routine returns no result. 
+; --------------------------------------------------
 restoreSavedZeroPageData
-    ldy #8
+    ldy #7
 .restoreLoop
     lda SAVED_ZERO_PAGE_DATA,y
     sta $F7, y
