@@ -1,0 +1,8 @@
+
+
+initHiRes
+    rts
+
+
+backToNormal
+    rts 
