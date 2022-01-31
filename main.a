@@ -1,4 +1,4 @@
-!to "arith", cbm
+!to "mandelbr", cbm
 *=$c000
 
 FAST_MUL = 1
