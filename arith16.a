@@ -31,6 +31,18 @@ ARITH_SCRATCH10 = $9F
 }
 
 ; --------------------------------------------------
+; move16Bit copies the 16 bit value stored at .memAddr1 to .memAddr2
+; --------------------------------------------------
+!macro move16Bit .memAddr1, .memAddr2 {
+    ; copy lo byte
+    lda .memAddr1
+    sta .memAddr2
+    ; copy hi byte
+    lda .memAddr1+1
+    sta .memAddr2+1
+}
+
+; --------------------------------------------------
 ; double16Bit multiplies the 16 bit value stored at .memAddr by 2
 ; --------------------------------------------------
 !macro double16Bit .memAddr {

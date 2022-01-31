@@ -12,6 +12,9 @@ IMAG
 MAX_ITER
 !byte 64
 
+PIC_COLOURS
+!byte $01
+
 NUM_ITER
 !byte 0
 
@@ -19,7 +22,7 @@ STEP_X
 !byte 0, 0, $c0, 0, 0
 
 STEP_Y
-!byte 0, $AA, $AA, 0, 0
+!byte 1, $AA, $AA, 0, 0
 
 INIT_REAL
 !byte 1, 0, 0, 0, 2
@@ -63,8 +66,10 @@ VAL_MAX
 !zone diag
 !source "diag.a"
 
-!zone main
+!zone hires
+!source "hires.a"
 
+!zone main
 
 ; --------------------------------------------------
 ; This routine test if calcualtion of the Mandelbrot sequence should be stopped.
@@ -184,7 +189,14 @@ initMandel
     rts
 
 nextMandel
+    +move16Bit COUNT_X, PLOT_POS_X
+    lda COUNT_Y
+    sta PLOT_POS_Y
     jsr calcOneMandelbrotSequence
+    jsr decideToSetPoint
+    bcc .skipPlot
+    jsr setPoint
+.skipPlot
     ; REAL <= STEP_X + REAL
     +callFunc add32Bit, STEP_X, REAL
     +inc16Bit COUNT_X
@@ -197,4 +209,36 @@ nextMandel
     +callFunc add32Bit, STEP_Y, IMAG
     inc COUNT_Y
 .done
+    rts
+
+
+; --------------------------------------------------
+; This routine looks at NUM_ITER and MAX_ITER and decides if a point is set
+; on the hires bitmap. If NUM_ITER == MAX_ITER then the point is always set 
+; --------------------------------------------------
+decideToSetPoint
+    lda NUM_ITER
+    cmp MAX_ITER
+    bne .decide
+    sec
+    rts
+.decide
+    lsr                 ; shift lowest bit in carry => lowest bit decides if point is set
+    rts
+
+
+; --------------------------------------------------
+; This routine visualizes the Mandelbrot set 
+; --------------------------------------------------
+mandelLoop
+    jsr initMandel
+    jsr initHiRes
+
+.loopUntilFinished
+    jsr nextMandel
+    lda COUNT_Y
+    cmp #200
+    bne .loopUntilFinished
+
+    jsr deInitHires
     rts

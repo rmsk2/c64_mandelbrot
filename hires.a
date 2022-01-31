@@ -1,8 +1,167 @@
 
 
+VIC = $D000
+BITMAP = $2000
+COLOR_DATA = $0400
+
+ADDR_POINTER = $9E;/$9F
+ZP_HELPADR1 = $03
+
+!macro memsetImmediate .val, .startAddr, .numBlocks {
+    lda #.val
+    sta MEM_VAL
+
+    lda #<.startAddr
+    sta ADDR_POINTER
+    lda #>.startAddr+1
+    sta ADDR_POINTER+1
+    
+    lda #.numBlocks
+    sta TEMP_NUM_BLOCKS
+    jsr memsetCall
+}
+
+!macro memsetAddr .colAddr, .startAddr, .numBlocks {
+    lda .colAddr
+    sta MEM_VAL
+
+    lda #<.startAddr
+    sta ADDR_POINTER
+    lda #>.startAddr+1
+    sta ADDR_POINTER+1
+    
+    lda #.numBlocks
+    sta TEMP_NUM_BLOCKS
+    jsr memsetCall
+}
+
+
+; --------------------------------------------------
+; This routine turns the hires mode on
+; --------------------------------------------------
 initHiRes
+    ; turn hires bitmap on
+    lda VIC+17
+    ora #%00100000
+    sta VIC+17
+    ; move bitmap memory to $2000 => set bit 3
+    lda VIC+24
+    ora #%00001000
+    sta VIC+24
+
+    +memsetAddr PIC_COLOURS, COLOR_DATA, 4
+    +memsetImmediate 0, BITMAP, 32
+
     rts
 
 
-backToNormal
+; --------------------------------------------------
+; This routine turns the hires mode off
+; --------------------------------------------------
+deInitHires
+    ; turn hires bitmap off
+    lda VIC+17
+    and #%11011111
+    sta VIC+17
+    ; clear bit 3 again
+    lda VIC+24
+    and #%11110111
+    sta VIC+24
+
+    +memsetImmediate 32, COLOR_DATA, 4
+
     rts 
+
+MEM_VAL
+!byte 0
+TEMP_NUM_BLOCKS
+!byte 0
+; --------------------------------------------------
+; This routine sets all bytes of the referenced memory to a
+; specified value.
+; 
+; ADDR_POINTER          has to contain the start address of the memory area
+; TEMP_NUM_BLOCKS       has to contain the number of 256 byte blocks to clear
+; MEM_VAL               has to contain the value to which memory is set
+; --------------------------------------------------
+memsetCall
+    ldy #0
+    ldx TEMP_NUM_BLOCKS
+    lda MEM_VAL
+.processBlock 
+    sta (ADDR_POINTER), y
+    iny
+    bne .processBlock
+    inc ADDR_POINTER+1
+    dex
+    bne .processBlock
+    
+    rts
+
+PLOT_POS_X
+!byte 0,0
+PLOT_POS_Y
+!byte 0
+
+; source: https://www.retro-programming.de/programming/nachschlagewerk/vic-ii/vic-ii-grafikmodes-bitmap-hi-res/
+; --------------------------------------------------
+; This routine sets a point in thr hires bitmap. 
+; 
+; PLOT_POS_X            has to contain the x position of the point
+; PLOT_POS_Y            has to contain the y position of the point
+; --------------------------------------------------
+setPoint
+    lda #<BITMAP                 ;Bitmap-Adresse auf die Zero-Page
+    sta ZP_HELPADR1
+    lda #>BITMAP
+    sta ZP_HELPADR1+1
+
+    ldy PLOT_POS_Y
+    ldx PLOT_POS_X
+    lda PLOT_POS_X+1
+    lsr                                ; move MSB of x pos into carry
+    bcc .skip                          ;falls Carry gelöscht weiter -> .skip
+    inc ZP_HELPADR1+1                  ;sonst MSB+1
+    clc                                ;und C wieder löschen (für ADC)
+.skip
+    txa                                ;X in den Akku
+    pha                                ;und für später merken
+    and #%11111000                     ;'Pixel'-Position ausblenden
+    adc ZP_HELPADR1                    ;Anzahl der Bytes für X-Position addieren
+    sta ZP_HELPADR1                    ;und speichern
+    bcc .skip1                         ;falls C gelöscht ist weiter -> .skip1
+    inc ZP_HELPADR1+1                  ;sonst MSB wegen gesetztem Carry erhöhen
+.skip1
+    tya                                ;Y in den Akku
+    pha                                ;und merken
+    lsr                                ;jetzt durch 8 teilen
+    lsr
+    lsr
+    beq .skip2
+    tay
+.loop
+    clc                                ;Für jede 'Textzeile' 320 Bytes addieren
+    lda ZP_HELPADR1
+    adc #64
+    sta ZP_HELPADR1
+    lda ZP_HELPADR1+1
+    adc #1
+    sta ZP_HELPADR1+1
+    dey
+    bne .loop
+.skip2
+    pla
+    and #%00000111                     ;Bytes für die 'Ziel-Textzeile'
+    tay                                ;ins Y-Register (für Y-nach-indizierte-Adr.)
+    pla                                ;jetzt noch die BIT-Position (X) berechnen
+    and #%00000111
+    tax
+    lda #$00
+    sec
+.loop1
+    ror                                ;Zielpixel 'einrotieren'
+    dex
+    bpl .loop1                         ;wiederhole, solange X positiv
+    ora (ZP_HELPADR1),Y                ;mit bisherigen Wert ODER-Verknüpfen
+    sta (ZP_HELPADR1),Y                ;und speichern
+    rts                                ;zurück zum Aufrufer
