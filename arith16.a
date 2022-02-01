@@ -453,7 +453,8 @@ mul32BitNormalizedUnsignedInternal
 ; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and compares its two operands. This routine ignores the sign byte it only compares the absolute values.
 ;
-; The result is returned in the carry flag. Its is set if *opL >= *opR 
+; The result is returned in the carry flag. Its is set if *opL >= *opR. In addition the the zero flag is set
+; when the values are equal.
 ; --------------------------------------------------
 cmp32BitUnsigned
     +getParameters ADDR_OPER_LEFT, ADDR_OPER_RIGHT, ARITH_SCRATCH1, ARITH_SCRATCH3
@@ -683,7 +684,7 @@ mul32BitNormalized
 }
 
 SAVED_ZERO_PAGE_DATA
-!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0,0,0
 
 ; --------------------------------------------------
 ; This subroutine saves the contents of all zero page bytes that are modified by
@@ -702,6 +703,10 @@ saveZeroPageMem
     sta SAVED_ZERO_PAGE_DATA + 8
     lda $9F
     sta SAVED_ZERO_PAGE_DATA + 9
+    lda $03
+    sta SAVED_ZERO_PAGE_DATA + 10
+    lda $04
+    sta SAVED_ZERO_PAGE_DATA + 11
     rts
 
 ; --------------------------------------------------
@@ -721,5 +726,9 @@ restoreSavedZeroPageData
     sta $9E
     lda SAVED_ZERO_PAGE_DATA+9
     sta $9F
+    lda SAVED_ZERO_PAGE_DATA + 10
+    sta $03
+    lda SAVED_ZERO_PAGE_DATA + 11
+    sta $04
     rts
 

@@ -5,33 +5,54 @@ FAST_MUL = 1
 RES_X = 320
 RES_Y = 200
 
+; --------------------------------------------------
+; values settable by callers
+; --------------------------------------------------
+
+; maxmimum number of iterations
 MAX_ITER
 !byte 24
 
+; Colours used for hires bitmap graphics. This value is written to the screen RAM
+; as colour information
 PIC_COLOURS
 !byte $05
 
+; The number of iterations used for the current point
 NUM_ITER
 !byte 0
 
+; x offset to move in complex plane for next point
 STEP_X
 !byte 0, $66, $66, $02, $00
 
+; Y offset to move in complex plane for next line of picture
 STEP_Y
 !byte 1, $5C, $8F, $02, $00
 
+; real part of upper left point of picture
 INIT_REAL
 !byte 1, 0, 0, 0, 2
 
+; imaginary part of upper left point of picture
 INIT_IMAG
 !byte 0, 0, 0, 0, 1
 
+; Number of points (resolution) in x direction
 MAX_X
 !byte 0,0 
 
+; Number of points (resolution) in y direction
 MAX_Y 
 !byte 0
 
+; Device number used for load and save
+DEVICE_NUM
+!byte 0
+
+; --------------------------------------------------
+; variables used for calculation
+; --------------------------------------------------
 COUNT_X
 !byte 0, 0
 
@@ -62,8 +83,10 @@ YN_SQUARE
 XN_SQUARE
 !byte 0,0,0,0,0
 
+; The fixed value 4. When a sequence's value is greater or equal to this number
+; the sequence defined by the current point diverges
 VAL_MAX
-!byte 0,1,0,0,4
+!byte 0,0,0,0,4
 
 !zone arith
 !source "arith16.a"
@@ -73,6 +96,9 @@ VAL_MAX
 
 !zone hires
 !source "hires.a"
+
+!zone diskio
+!source "disk_io.a"
 
 !zone main
 
@@ -108,14 +134,20 @@ testMandelbrotDone
     ; TEMP_MAX <= YN_SQUARE + TEMP_MAX
     +callFunc add32Bit, YN_SQUARE, TEMP_MAX
 
-    ; Carry is set if TEMP >= 4 + 1/2^24
+    ; Stop if TEMP_MAX > 4
+    ; continue if TEMP_MAX <= 4
+
+    ; Carry is set if TEMP_MAX >= 4
+    ; Zero flag is set if TEMP_MAX == 4
     +callFunc cmp32BitUnsigned, TEMP_MAX, VAL_MAX 
-    bcs .stopCalc
-.continueCalc
+    bcs .greaterPerhapsEqual
+.continueCalc                ; TEMP_MAX < 4
     lda #0
     rts
+.greaterPerhapsEqual         ; TEMP_MAX >= 4
+    beq .continueCalc        ; TEMP_MAX == 4? => If yes continue
 .stopCalc
-    lda #1
+    lda #1                   ; TEMP_MAX > 4 => Stop
     rts
 
 ; --------------------------------------------------
