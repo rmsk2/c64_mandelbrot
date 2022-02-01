@@ -2,12 +2,8 @@
 *=$c000
 
 FAST_MUL = 1
-
-REAL
-!byte 0,2,0,0,0
-
-IMAG
-!byte 0,3,0,0,0
+RES_X = 320
+RES_Y = 200
 
 MAX_ITER
 !byte 24
@@ -30,17 +26,23 @@ INIT_REAL
 INIT_IMAG
 !byte 0, 0, 0, 0, 1
 
+MAX_X
+!byte 0,0 
+
+MAX_Y 
+!byte 0
+
 COUNT_X
 !byte 0, 0
 
 COUNT_Y
 !byte 0
 
-MAX_X
-!byte 0,0 
+REAL
+!byte 0,2,0,0,0
 
-MAX_Y 
-!byte 0
+IMAG
+!byte 0,3,0,0,0
 
 XN
 !byte 0,0,0,0,0
@@ -51,10 +53,13 @@ YN
 XN_OLD
 !byte 0,0,0,0,0
 
-COND1
+TEMP_MAX
 !byte 0,0,0,0,0
 
-TEMP
+YN_SQUARE
+!byte 0,0,0,0,0
+
+XN_SQUARE
 !byte 0,0,0,0,0
 
 VAL_MAX
@@ -90,19 +95,21 @@ testMandelbrotDone
     ; abs_val = xn*xn + yn*yn
     ; *****************************
 
-    ; TEMP <= XN
-    +callFunc move32Bit, XN, TEMP
-    ; TEMP <= TEMP * TEMP
-    +callFunc mul32BitNormalized, TEMP, TEMP
-    ; COND1 <= YN
-    +callFunc move32Bit, YN, COND1
-    ; COND1 <= COND1 * COND1
-    +callFunc mul32BitNormalized, COND1, COND1
-    ; TEMP <= COND1 + TEMP
-    +callFunc add32Bit, COND1, TEMP
+    ; XN_SQUARE <= XN
+    +callFunc move32Bit, XN, XN_SQUARE
+    ; XN_SQUARE <= XN_SQUARE * XN_SQUARE
+    +callFunc mul32BitNormalized, XN_SQUARE, XN_SQUARE
+    ; YN_SQUARE <= YN
+    +callFunc move32Bit, YN, YN_SQUARE
+    ; YN_SQUARE <= YN_SQUARE * YN_SQUARE
+    +callFunc mul32BitNormalized, YN_SQUARE, YN_SQUARE
+    ; TEMP_MAX <= XN_SQUARE
+    +callFunc move32Bit, XN_SQUARE, TEMP_MAX
+    ; TEMP_MAX <= YN_SQUARE + TEMP_MAX
+    +callFunc add32Bit, YN_SQUARE, TEMP_MAX
 
     ; Carry is set if TEMP >= 4 + 1/2^24
-    +callFunc cmp32BitUnsigned, TEMP, VAL_MAX 
+    +callFunc cmp32BitUnsigned, TEMP_MAX, VAL_MAX 
     bcs .stopCalc
 .continueCalc
     lda #0
@@ -143,16 +150,12 @@ calcOneMandelbrotSequence
     ; xn+1 = xn*xn - yn*yn + real
     ; *****************************
 
-    ; XN <= XN * XN
-    +callFunc mul32BitNormalized, XN, XN
-    ; TEMP <= YN
-    +callFunc move32Bit, YN, TEMP
-    ; TEMP <= TEMP * TEMP
-    +callFunc mul32BitNormalized, TEMP, TEMP
-    ; TEMP <= -TEMP
-    +callFuncMono neg32, TEMP
-    ; XN <= - TEMP + XN
-    +callFunc add32Bit, TEMP, XN
+    ; XN <= XN_SQUARE
+    +callFunc move32Bit, XN_SQUARE, XN
+    ; YN_SQUARE <= -YN_SQUARE
+    +callFuncMono neg32, YN_SQUARE
+    ; XN <= YN_SQUARE + XN
+    +callFunc add32Bit, YN_SQUARE, XN
     ; XN <= REAL + XN
     +callFunc add32Bit, REAL, XN
 
@@ -180,8 +183,8 @@ calcOneMandelbrotSequence
 ; --------------------------------------------------
 initMandel
     ; set limits
-    +load16BitImmediate 320, MAX_X
-    lda #200
+    +load16BitImmediate RES_X, MAX_X
+    lda #RES_Y
     sta MAX_Y
     ; set start values
     +load16BitImmediate 0, COUNT_X
