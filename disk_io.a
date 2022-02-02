@@ -93,7 +93,7 @@ ERROR_MSG_BUFFER
 ; if device DEVICE_NUM is not present
 ; 
 ; INPUT:  None
-; OUTPUT: error code in accu
+; OUTPUT: error code in accu.
 ; --------------------------------------------------
 readErrorChannel
     ; set error code to "00", ie OK
@@ -147,12 +147,13 @@ readErrorChannel
 ; returned message. This can lock up if device DEVICE_NUM is not present.
 ; 
 ; INPUT:  None
-; OUTPUT: error code in accu
+; OUTPUT: error code in accu. This value is also saved in DISK_ERROR.
 ; --------------------------------------------------
 readAndEvalErrorChannel
     jsr readErrorChannel
     +load16BitImmediate ERROR_MSG_BUFFER, TMP_PTR
     jsr asciiToByte
+    sta DISK_ERROR
     rts
 
 

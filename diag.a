@@ -152,6 +152,9 @@ setFileNameAndLoad
     bne .copyFileName2
     sty PIC_FILE_NAME_LEN
     jsr loadAndDisplayPic
+    lda DISK_ERROR
+    bne .stopLoad
     jsr waitForKey
+.stopLoad
     jsr deInitHires
     rts

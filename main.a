@@ -5,6 +5,41 @@ FAST_MUL = 1
 RES_X = 320
 RES_Y = 200
 
+JMP_TABLE
+; ----------------------------
+; Calculation related stuff
+; ----------------------------
+jmp initMandel
+jmp nextMandel
+; ----------------------------
+; administrative stuff
+; ----------------------------
+jmp saveZeroPageMem
+jmp restoreSavedZeroPageData
+; ----------------------------
+; Graphics stuff
+; ----------------------------
+jmp initHiRes
+jmp deInitHires
+jmp turnHiresOn
+jmp resetColors
+; ----------------------------
+; I/O stuff
+; ----------------------------
+jmp savePic
+jmp loadPic
+jmp readAndEvalErrorChannel
+; ----------------------------
+; High level stuff
+; ----------------------------
+jmp mandelLoop
+jmp loadAndDisplayPic
+; ----------------------------
+; For testing
+; ----------------------------
+jmp setFileNameAndGo
+jmp setFileNameAndLoad
+
 ; --------------------------------------------------
 ; values settable/usable by callers
 ; --------------------------------------------------
@@ -307,7 +342,6 @@ mandelLoop
     jsr deInitHires
     jsr savePic
     jsr readAndEvalErrorChannel
-    sta DISK_ERROR
     jsr restoreSavedZeroPageData
     rts
 
@@ -318,7 +352,7 @@ loadAndDisplayPic
     jsr saveZeroPageMem
     jsr loadPic
     jsr readAndEvalErrorChannel
-    sta DISK_ERROR
+    lda DISK_ERROR
     cmp #0
     bne .loadDiskError
     jsr turnHiresOn
