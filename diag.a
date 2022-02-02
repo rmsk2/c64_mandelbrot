@@ -142,6 +142,7 @@ setFileNameAndGo
 
 DEFAULT_FILE_NAME_LOAD
 !tx "0:MANDELBROT.PIC,S,R"
+;!tx "0:APFEL.GR1"
 setFileNameAndLoad
     ldy #0
 .copyFileName2
