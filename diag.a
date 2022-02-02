@@ -154,7 +154,7 @@ setFileNameAndLoad
     sty PIC_FILE_NAME_LEN
     jsr loadAndDisplayPic
     lda DISK_ERROR
-    bne .stopLoad
+    bne .stopLoad                   ; Nonzero value in accu => error
     jsr waitForKey
 .stopLoad
     jsr deInitHires
