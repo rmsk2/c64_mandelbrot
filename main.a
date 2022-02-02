@@ -6,7 +6,7 @@ RES_X = 320
 RES_Y = 200
 
 ; --------------------------------------------------
-; values settable by callers
+; values settable/usable by callers
 ; --------------------------------------------------
 
 ; maxmimum number of iterations
@@ -48,6 +48,20 @@ MAX_Y
 
 ; Device number used for load and save
 DEVICE_NUM
+!byte 8
+
+; File name used for load and save. 40 bytes maximum length
+PIC_FILE_NAME
+!byte 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+!byte 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+!byte 0,0,0,0, 0,0,0,0
+
+; actual length of PIC_FILE_NAME
+PIC_FILE_NAME_LEN
+!byte 0
+
+; Contains error number of disk operation
+DISK_ERROR
 !byte 0
 
 ; --------------------------------------------------
@@ -280,6 +294,7 @@ decideToSetPoint
 ; This routine visualizes the Mandelbrot set 
 ; --------------------------------------------------
 mandelLoop
+    jsr saveZeroPageMem
     jsr initMandel
     jsr initHiRes
 
@@ -290,4 +305,26 @@ mandelLoop
     bne .loopUntilFinished
 
     jsr deInitHires
+    jsr savePic
+    jsr readAndEvalErrorChannel
+    sta DISK_ERROR
+    jsr restoreSavedZeroPageData
+    rts
+
+; --------------------------------------------------
+; This routine loads the picture and then switches to hires 
+; --------------------------------------------------
+loadAndDisplayPic
+    jsr saveZeroPageMem
+    jsr loadPic
+    jsr readAndEvalErrorChannel
+    sta DISK_ERROR
+    cmp #0
+    bne .loadDiskError
+    jsr turnHiresOn
+    jsr restoreSavedZeroPageData
+    rts
+
+.loadDiskError
+    jsr restoreSavedZeroPageData
     rts

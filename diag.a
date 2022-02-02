@@ -1,3 +1,4 @@
+GETIN   = $FFE4
 
 HEX_CHARS
 !tx "0123456789ABCDEF"
@@ -108,4 +109,49 @@ testAdd
     +callFunc add32Bit, ARG1, ARG2
     +printFixedPoint ARG2
 
+    rts
+
+; --------------------------------------------------
+; Wait for a key and return ASCII Code of key in Accumulator
+; 
+; INPUT:  None
+; OUTPUT: ASCII code of read character in accumulator
+; --------------------------------------------------
+waitForKey
+    jsr GETIN         ; get key from keyboard
+    cmp #0            ; if 0, no key pressed
+    beq waitForKey    ; loop if no key pressed
+
+    rts               ; ASCII Code of pressed key is now in accumulator
+
+
+
+DEFAULT_FILE_NAME_SAVE
+!tx "@0:MANDELBROT.PIC,S,W"
+setFileNameAndGo
+    ldy #0
+.copyFileName
+    lda DEFAULT_FILE_NAME_SAVE,Y
+    sta PIC_FILE_NAME,y
+    iny
+    cpy #21
+    bne .copyFileName
+    sty PIC_FILE_NAME_LEN
+    jmp mandelLoop
+
+
+DEFAULT_FILE_NAME_LOAD
+!tx "0:MANDELBROT.PIC,S,R"
+setFileNameAndLoad
+    ldy #0
+.copyFileName2
+    lda DEFAULT_FILE_NAME_LOAD,Y
+    sta PIC_FILE_NAME,y
+    iny
+    cpy #20
+    bne .copyFileName2
+    sty PIC_FILE_NAME_LEN
+    jsr loadAndDisplayPic
+    jsr waitForKey
+    jsr deInitHires
     rts

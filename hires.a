@@ -41,6 +41,8 @@ ZP_HELPADR1 = $03
 ; This routine turns the hires mode on
 ; --------------------------------------------------
 initHiRes
+    +memsetImmediate 0, BITMAP, 32
+turnHiresOn
     ; turn hires bitmap on
     lda VIC+17
     ora #%00100000
@@ -50,11 +52,10 @@ initHiRes
     ora #%00001000
     sta VIC+24
 
+resetColors
     +memsetAddr PIC_COLOURS, COLOR_DATA, 4
-    +memsetImmediate 0, BITMAP, 32
 
     rts
-
 
 ; --------------------------------------------------
 ; This routine turns the hires mode off
