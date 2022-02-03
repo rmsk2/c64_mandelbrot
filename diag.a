@@ -3,6 +3,10 @@ GETIN   = $FFE4
 HEX_CHARS
 !tx "0123456789ABCDEF"
 
+CHAROUT = $FFD2
+TEMP_PTR = $03
+TEMP_PTR2 = $05
+
 LO_NIBBLE
 !byte 0
 
@@ -14,19 +18,19 @@ LO_NIBBLE
 ; --------------------------------------------------
 printNumHex
     ldy #0
-    lda ($03), y
+    lda (TEMP_PTR), y
     bne .printMinus
     lda #43
-    jsr $FFD2
+    jsr CHAROUT
     jmp .egal
 .printMinus
     lda #45
-    jsr $FFD2
+    jsr CHAROUT
 .egal
 
     ldy #4
 .loopPrint
-    lda ($03), y
+    lda (TEMP_PTR), y
     jsr printByte
     dey
     bne .loopPrint
@@ -35,9 +39,9 @@ printNumHex
 
 !macro printFixedPoint .addr {
     lda #<.addr
-    sta $03
+    sta TEMP_PTR
     lda #>.addr
-    sta $04
+    sta TEMP_PTR+1
     jsr printNumHex
 } 
 
@@ -51,17 +55,17 @@ printByte
     stx LO_NIBBLE
     tax
     lda HEX_CHARS, X
-    jsr $FFD2
+    jsr CHAROUT
     ldx LO_NIBBLE
     lda HEX_CHARS, X
-    jsr $FFD2
+    jsr CHAROUT
     rts
 
 printCRLF
     lda #13
-    jsr $FFD2
+    jsr CHAROUT
     lda #10
-    jsr $FFD2
+    jsr CHAROUT
     rts
 
 .CONV_TEMP
@@ -125,39 +129,83 @@ waitForKey
     rts               ; ASCII Code of pressed key is now in accumulator
 
 
+STR_LEN_TEMP
+!byte 0
+; --------------------------------------------------
+; This routine copies a string referenced via TEMP_PTR to a string
+; referenced by TEMP_PTR2. The first byte of a string is a length
+; value followed by the characters of the string. The maximum length
+; of a string including the length byte es 255 bytes. This also means
+; that a sting can contain at most 254 characters.
+; --------------------------------------------------
+stringCopy
+    ldy #0
+    lda (TEMP_PTR),y
+    sta STR_LEN_TEMP
+    inc STR_LEN_TEMP                      ; take length byte into account
+.copyLoop
+    lda (TEMP_PTR),y
+    sta (TEMP_PTR2),y
+    iny
+    cpy STR_LEN_TEMP
+    bne .copyLoop    
+    rts
 
+!macro strCpy .addr1, .addr2 {
+    +load16BitImmediate .addr1, TEMP_PTR
+    +load16BitImmediate .addr2, TEMP_PTR2
+    jsr stringCopy
+}
+
+
+PRINT_LEN
+!byte 0
+; --------------------------------------------------
+; This routine prints a string referenced via TEMP_PTR to the screen
+; --------------------------------------------------
+printString
+    ldy #0
+    lda (TEMP_PTR),Y                   ; load length byte
+    sta PRINT_LEN
+    +inc16Bit TEMP_PTR                 ; move pointer to first byte of string
+.loopPrintStr
+    cpy PRINT_LEN                      ; check current print index first to handle zero length strings correctly
+    beq .printDone
+    lda (TEMP_PTR),y
+    jsr CHAROUT
+    iny
+    jmp .loopPrintStr
+.printDone
+    rts
+
+!macro printStr .addr {
+    +load16BitImmediate .addr, TEMP_PTR
+    jsr printString
+}
+
+SAVE_NAME_LEN
+!byte 21
 DEFAULT_FILE_NAME_SAVE
 !tx "@0:MANDELBROT.PIC,S,W"
 setFileNameAndGo
-    ldy #0
-.copyFileName
-    lda DEFAULT_FILE_NAME_SAVE,Y
-    sta PIC_FILE_NAME,y
-    iny
-    cpy #21
-    bne .copyFileName
-    sty PIC_FILE_NAME_LEN
+    +strCpy SAVE_NAME_LEN, PIC_FILE_NAME_LEN
     jmp mandelLoop
 
 
+LOAD_NAME_LEN
+!byte 20
 DEFAULT_FILE_NAME_LOAD
 !tx "0:MANDELBROT.PIC,S,R"
 ;!tx "0:APFEL.GR1"
 setFileNameAndLoad
-    ldy #0
-.copyFileName2
-    lda DEFAULT_FILE_NAME_LOAD,Y
-    sta PIC_FILE_NAME,y
-    iny
-    cpy #20
-    bne .copyFileName2
-    sty PIC_FILE_NAME_LEN
+    +strCpy LOAD_NAME_LEN, PIC_FILE_NAME_LEN
     jsr loadAndDisplayPic
     lda DISK_ERROR
     beq .waitForKey                      ; zero value in accu => load successfull
     jsr deInitHires
     jsr printCRLF
-    +printByteLN DISK_ERROR
+    +printStr ERR_BYTE_COUNTER
+    jsr printCRLF
     rts
 .waitForKey
     jsr waitForKey

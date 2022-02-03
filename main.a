@@ -85,15 +85,15 @@ MAX_Y
 DEVICE_NUM
 !byte 8
 
+; actual length of PIC_FILE_NAME
+PIC_FILE_NAME_LEN
+!byte 0
+
 ; File name used for load and save. 40 bytes maximum length
 PIC_FILE_NAME
 !byte 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 !byte 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 !byte 0,0,0,0, 0,0,0,0
-
-; actual length of PIC_FILE_NAME
-PIC_FILE_NAME_LEN
-!byte 0
 
 ; Contains error number of disk operation
 DISK_ERROR

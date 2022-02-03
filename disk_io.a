@@ -80,14 +80,13 @@ loadPic
     lda #DISK_IO_ERR
     rts
 
-
+ERR_BYTE_COUNTER
+!byte $00
 ERROR_MSG_BUFFER
 !byte $00, $00, $00, $00, $00, $00, $00, $00
 !byte $00, $00, $00, $00, $00, $00, $00, $00
 !byte $00, $00, $00, $00, $00, $00, $00, $00
 !byte $00, $00, $00, $00, $00, $00, $00, $00
-.ERR_BYTE_COUNTER
-!byte $00
 ; --------------------------------------------------
 ; readErrorChannel Reads the current drive status. This can lock up
 ; if device DEVICE_NUM is not present
@@ -118,17 +117,17 @@ readErrorChannel
     jsr CHKIN                         ; use file 15 as input
 
     lda #0
-    sta .ERR_BYTE_COUNTER             ; set buffer index to 0
+    sta ERR_BYTE_COUNTER             ; set buffer index to 0
 .loopErrorChannel
     jsr READST                        ; read status word
     bne .close                        ; test for eof/error
     jsr CHRIN                         ; read character from error channel
-    ldx .ERR_BYTE_COUNTER
+    ldx ERR_BYTE_COUNTER
     cpx #32                           ; have we exhausted the buffer size?
-    beq .loopErrorChannel             ; yes, do not store the received byte
+    beq .loopErrorChannel             ; yes => do not store the received byte, but continue to read in order to drain error channel
     sta ERROR_MSG_BUFFER, X           ; there is room left in the buffer => store byte
     inx                               ; advance index to next storage location
-    stx .ERR_BYTE_COUNTER
+    stx ERR_BYTE_COUNTER
     jmp .loopErrorChannel             ; read next byte
 
 .close 

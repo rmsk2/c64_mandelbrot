@@ -18,7 +18,7 @@ clean:
 	rm mandelbr.d64
 	rm mandelbr.txt
 
-mandelbr: main.a arith16.a  hires.a diag.a
+mandelbr: main.a arith16.a  hires.a diag.a disk_io.a
 	$(ACME) -l mandelbr.txt main.a
 
 mandelbr.d64: mandelbr
