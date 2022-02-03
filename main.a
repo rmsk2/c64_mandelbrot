@@ -40,6 +40,9 @@ jmp loadAndDisplayPic
 jmp setFileNameAndGo
 jmp setFileNameAndLoad
 
+PLOT_FUNC_VECTOR
+!byte <decideToSetPoint, >decideToSetPoint
+
 ; --------------------------------------------------
 ; values settable/usable by callers
 ; --------------------------------------------------
@@ -75,11 +78,11 @@ INIT_IMAG
 
 ; Number of points (resolution) in x direction
 MAX_X
-!byte 0,0 
+!byte <RES_X, >RES_X 
 
 ; Number of points (resolution) in y direction
 MAX_Y 
-!byte 0
+!byte RES_Y
 
 ; Device number used for load and save
 DEVICE_NUM
@@ -99,14 +102,18 @@ PIC_FILE_NAME
 DISK_ERROR
 !byte 0
 
-; --------------------------------------------------
-; variables used for calculation
-; --------------------------------------------------
+; current X position
 COUNT_X
 !byte 0, 0
 
+; current y position
 COUNT_Y
 !byte 0
+
+
+; --------------------------------------------------
+; variables used for calculation
+; --------------------------------------------------
 
 REAL
 !byte 0,2,0,0,0
@@ -131,6 +138,10 @@ YN_SQUARE
 
 XN_SQUARE
 !byte 0,0,0,0,0
+
+; --------------------------------------------------
+; constants
+; --------------------------------------------------
 
 ; The fixed value 4. When a sequence's value is greater or equal to this number
 ; the sequence defined by the current point diverges
@@ -263,11 +274,6 @@ calcOneMandelbrotSequence
 ; initMandel has no return value. 
 ; --------------------------------------------------
 initMandel
-    ; set limits
-    +load16BitImmediate RES_X, MAX_X
-    lda #RES_Y
-    sta MAX_Y
-    ; set start values
     +load16BitImmediate 0, COUNT_X
     lda #0
     sta COUNT_Y
@@ -291,10 +297,7 @@ nextMandel
     lda COUNT_Y
     sta PLOT_POS_Y
     jsr calcOneMandelbrotSequence
-    jsr decideToSetPoint
-    bcc .skipPlot
-    jsr setPoint
-.skipPlot
+    jsr drawPoint
     ; REAL <= STEP_X + REAL
     +callFunc add32Bit, STEP_X, REAL
     +inc16Bit COUNT_X
@@ -310,6 +313,9 @@ nextMandel
     rts
 
 
+drawPoint
+    jmp (PLOT_FUNC_VECTOR)
+
 ; --------------------------------------------------
 ; This routine looks at NUM_ITER and MAX_ITER and decides if a point is set
 ; on the hires bitmap. If NUM_ITER == MAX_ITER then the point is always set 
@@ -317,11 +323,12 @@ nextMandel
 decideToSetPoint
     lda NUM_ITER
     cmp MAX_ITER
-    bne .decide
-    sec
-    rts
-.decide
+    beq .doPlot
     lsr                 ; shift lowest bit in carry => lowest bit decides if point is set
+    bcc .skipPlot
+.doPlot
+    jsr setPoint
+.skipPlot
     rts
 
 
