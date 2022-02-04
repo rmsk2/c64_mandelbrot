@@ -297,6 +297,11 @@ initMandel
     rts
 
 
+; --------------------------------------------------
+; This routine configures the program to use the multicolor mode
+;
+; setMuticolor has no return value. 
+; --------------------------------------------------
 setMuticolor
     +load16BitImmediate 160, MAX_X 
     +load16BitImmediate decideToSetPointColor, PLOT_FUNC_VECTOR
@@ -305,7 +310,11 @@ setMuticolor
 
     rts
 
-
+; --------------------------------------------------
+; This routine configures the program to use the hires mode
+;
+; setHires has no return value. 
+; --------------------------------------------------
 setHires
     +load16BitImmediate RES_X, MAX_X 
     +load16BitImmediate decideToSetPoint, PLOT_FUNC_VECTOR
