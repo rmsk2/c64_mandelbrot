@@ -80,6 +80,8 @@ turnMulticolorOn
 resetMulticolors
     +memsetAddr PIC_COLOURS, COLOR_DATA, 4
     +memsetAddr THIRD_COLOUR, COLOR_RAM, 4
+    lda BACKGROUND_COLOR
+    sta 53281
 
     rts
 
