@@ -9,39 +9,49 @@ JMP_TABLE
 ; ----------------------------
 ; Calculation related stuff
 ; ----------------------------
-jmp initMandel
-jmp nextMandel
+jmp initMandel ;0
+jmp nextMandel ;1
 ; ----------------------------
 ; administrative stuff
 ; ----------------------------
-jmp saveZeroPageMem
-jmp restoreSavedZeroPageData
+jmp saveZeroPageMem ;2
+jmp restoreSavedZeroPageData;3
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
-jmp initHiRes
-jmp deInitHires
-jmp turnHiresOn
-jmp resetColors
+jmp initHiRes ;4
+jmp deInitHires ;5
+jmp turnHiresOn ;6
+jmp resetColors ;7
 ; ----------------------------
 ; I/O stuff
 ; ----------------------------
-jmp savePic
-jmp loadPic
-jmp readAndEvalErrorChannel
+jmp savePic ;8
+jmp loadPic ;9 
+jmp readAndEvalErrorChannel ; 10
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp mandelLoop
-jmp loadAndDisplayPic
+jmp mandelLoop ; 11
+jmp loadAndDisplayPic ; 12
+; ----------------------------
+; Mode switching
+; ----------------------------
+jmp setMuticolor ; 13
+jmp setHires ; 14
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo
-jmp setFileNameAndLoad
+jmp setFileNameAndGo ; 15
+jmp setFileNameAndLoad ; 16
+
 
 PLOT_FUNC_VECTOR
 !byte <decideToSetPoint, >decideToSetPoint
+GRAPHICS_ON_VECTOR
+!byte <initHiRes, >initHiRes
+GRAPHICS_OFF_VECTOR
+!byte <deInitHires, >deInitHires
 
 ; --------------------------------------------------
 ; values settable/usable by callers
@@ -55,6 +65,9 @@ MAX_ITER
 ; as colour information
 PIC_COLOURS
 !byte $05
+
+THIRD_COLOUR
+!byte $03
 
 ; The number of iterations used for the current point
 NUM_ITER
@@ -284,6 +297,23 @@ initMandel
     rts
 
 
+setMuticolor
+    +load16BitImmediate 160, MAX_X 
+    +load16BitImmediate decideToSetPointColor, PLOT_FUNC_VECTOR
+    +load16BitImmediate initMuticolor, GRAPHICS_ON_VECTOR
+    +load16BitImmediate deInitMulticolor, GRAPHICS_OFF_VECTOR
+
+    rts
+
+
+setHires
+    +load16BitImmediate RES_X, MAX_X 
+    +load16BitImmediate decideToSetPoint, PLOT_FUNC_VECTOR
+    +load16BitImmediate initHiRes, GRAPHICS_ON_VECTOR
+    +load16BitImmediate deInitHires, GRAPHICS_OFF_VECTOR
+
+    rts
+
 ; --------------------------------------------------
 ; This routine performs all necessary calculations for one point in the
 ; complex plane. Calling this routine repeatedly calculates and draws the
@@ -316,6 +346,12 @@ nextMandel
 drawPoint
     jmp (PLOT_FUNC_VECTOR)
 
+bitMapOn
+    jmp (GRAPHICS_ON_VECTOR)
+
+bitMapOff
+    jmp (GRAPHICS_OFF_VECTOR)    
+
 ; --------------------------------------------------
 ; This routine looks at NUM_ITER and MAX_ITER and decides if a point is set
 ; on the hires bitmap. If NUM_ITER == MAX_ITER then the point is always set 
@@ -333,12 +369,27 @@ decideToSetPoint
 
 
 ; --------------------------------------------------
+; This routine looks at NUM_ITER and MAX_ITER and decides what color a point is set to
+; on the multicolor bitmap. If NUM_ITER == MAX_ITER then the point is not set 
+; --------------------------------------------------
+decideToSetPointColor
+    lda NUM_ITER
+    cmp MAX_ITER
+    beq .skipPlotMulti
+    and #3
+    sta PLOT_COL
+    jsr setPointMulticolor
+.skipPlotMulti
+    rts
+
+
+; --------------------------------------------------
 ; This routine visualizes the Mandelbrot set 
 ; --------------------------------------------------
 mandelLoop
     jsr saveZeroPageMem
     jsr initMandel
-    jsr initHiRes
+    jsr bitMapOn
 
 .loopUntilFinished
     jsr nextMandel
@@ -346,7 +397,7 @@ mandelLoop
     cmp MAX_Y
     bne .loopUntilFinished
 
-    jsr deInitHires
+    jsr bitMapOff
     jsr savePic
     jsr readAndEvalErrorChannel
     jsr restoreSavedZeroPageData
@@ -362,7 +413,7 @@ loadAndDisplayPic
     lda DISK_ERROR
     cmp #0
     bne .loadDiskError
-    jsr turnHiresOn
+    jsr bitMapOn
     jsr restoreSavedZeroPageData
     rts
 

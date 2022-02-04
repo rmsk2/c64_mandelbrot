@@ -4,6 +4,7 @@ VIC = $D000
 BITMAP = $2000
 BITMAP_END = BITMAP + 8192
 COLOR_DATA = $0400
+COLOR_RAM = $D800
 
 ADDR_POINTER = $9E;/$9F
 ZP_HELPADR1 = $03
@@ -58,6 +59,32 @@ resetColors
     rts
 
 ; --------------------------------------------------
+; This routine turns the multicolor bit map mode on
+; --------------------------------------------------
+initMuticolor
+    +memsetImmediate 0, BITMAP, 32
+turnMulticolorOn
+    ; turn hires bitmap on
+    lda VIC+17
+    ora #%00100000
+    sta VIC+17
+    ; move bitmap memory to $2000 => set bit 3
+    lda VIC+24
+    ora #%00001000
+    sta VIC+24
+    ; turn muticolor on
+    lda VIC+22                         
+    ora #%00010000                     
+    sta VIC+22    
+
+resetMulticolors
+    +memsetAddr PIC_COLOURS, COLOR_DATA, 4
+    +memsetAddr THIRD_COLOUR, COLOR_RAM, 4
+
+    rts
+
+
+; --------------------------------------------------
 ; This routine turns the hires mode off
 ; --------------------------------------------------
 deInitHires
@@ -73,6 +100,29 @@ deInitHires
     +memsetImmediate 32, COLOR_DATA, 4
 
     rts 
+
+; --------------------------------------------------
+; This routine turns the  multicolor mode off
+; --------------------------------------------------
+deInitMulticolor
+    ; turn hires bitmap off
+    lda VIC+17
+    and #%11011111
+    sta VIC+17
+    ; clear bit 3 again
+    lda VIC+24
+    and #%11110111
+    sta VIC+24
+    ; turn muticolor off
+    lda VIC+22                         
+    and #%11101111                     
+    sta VIC+22    
+
+    +memsetImmediate 32, COLOR_DATA, 4
+    +memsetAddr 0, COLOR_RAM, 4    
+
+    rts 
+
 
 MEM_VAL
 !byte 0
@@ -104,6 +154,31 @@ PLOT_POS_X
 !byte 0,0
 PLOT_POS_Y
 !byte 0
+PLOT_COL
+!byte 0
+
+; --------------------------------------------------
+; This routine sets a point in the multixolor bitmap. Inefficient but sufficient ;-)
+; 
+; PLOT_POS_X            has to contain the x position of the point
+; PLOT_POS_Y            has to contain the y position of the point
+; --------------------------------------------------
+setPointMulticolor
+    lda #0
+    sta PLOT_POS_X+1                                ; clear hi byte of POS_X
+    +double16Bit PLOT_POS_X                         ; Multiply xpos by two
+    lda PLOT_COL                  
+    and #1                                          ; is bit 0 in color number set?
+    beq .skipPixelOne                               ; No => do not plot. Look at bit 1
+    jsr setPoint                                    ; Yes => set first bit
+.skipPixelOne
+    lda PLOT_COL                                    ; is bit 1 of color number set?
+    and #2
+    beq .skipPixelTwo                               ; No => do not plot
+    +inc16Bit PLOT_POS_X                            ; select pixel to the right
+    jsr setPoint                                    ; set it
+.skipPixelTwo
+    rts
 
 ; source: https://www.retro-programming.de/programming/nachschlagewerk/vic-ii/vic-ii-grafikmodes-bitmap-hi-res/
 ; --------------------------------------------------

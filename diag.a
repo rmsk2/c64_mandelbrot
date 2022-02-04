@@ -202,12 +202,12 @@ setFileNameAndLoad
     jsr loadAndDisplayPic
     lda DISK_ERROR
     beq .waitForKey                      ; zero value in accu => load successfull
-    jsr deInitHires
+    jsr bitMapOff
     jsr printCRLF
     +printStr ERR_BYTE_COUNTER
     jsr printCRLF
     rts
 .waitForKey
     jsr waitForKey
-    jsr deInitHires
+    jsr bitMapOff
     rts

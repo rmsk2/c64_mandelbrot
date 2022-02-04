@@ -38,8 +38,8 @@ savePic
     lda #>BITMAP
     sta $c2
     ; end address of block to save
-    ldx #<BITMAP_END+1
-    ldy #>BITMAP_END+1
+    ldx #<BITMAP_END
+    ldy #>BITMAP_END
     lda #$c1
     jsr SAVE
     bcs .saveError
