@@ -21,6 +21,15 @@ TMP_PTR = $03
 ; OUTPUT: result DISK_IO_OK or DISK_IO_ERR in accu
 ; --------------------------------------------------
 savePic
+    ; attach parameters of picture
+    ldy #0
+.copyParams
+    lda STEP_X,y
+    sta BITMAP_END,y
+    iny
+    cpy #20
+    bne .copyParams
+    
     ; open 1,DEVICE_NUM,0,"....."
     lda PIC_FILE_NAME_LEN                ; file name length
     ldx #<PIC_FILE_NAME
@@ -38,8 +47,8 @@ savePic
     lda #>BITMAP
     sta $c2
     ; end address of block to save
-    ldx #<BITMAP_END
-    ldy #>BITMAP_END
+    ldx #<BITMAP_END+20
+    ldy #>BITMAP_END+20
     lda #$c1
     jsr SAVE
     bcs .saveError
@@ -75,6 +84,21 @@ loadPic
     jsr LOAD
     bcs .loadError
     jsr readAndEvalErrorChannel
+    cmp #0
+    bne .errorDone                    ; Error channel returned an error
+    tax                               ; save value in accu
+
+    ; copy paramters of picture back
+    ldy #0
+.copyParamsBack
+    lda BITMAP_END,y
+    sta STEP_X,y
+    iny
+    cpy #20
+    bne .copyParamsBack
+
+    txa                               ; restore accu value
+.errorDone
     rts
 .loadError
     lda #DISK_IO_ERR
