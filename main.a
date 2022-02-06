@@ -44,6 +44,7 @@ jmp setHires ; 14
 ; ----------------------------
 jmp setFileNameAndGo ; 15
 jmp setFileNameAndLoad ; 16
+jmp testArith ; 17
 
 ; ----------------------------
 PLOT_FUNC_VECTOR

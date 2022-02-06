@@ -501,16 +501,7 @@ move32Bit
 
     rts
 
-!macro saveCarry {
-    ldx #0
-    stx TEMP_SHIFT
-    bcc .endSaveCarry
-    inc TEMP_SHIFT
-.endSaveCarry
-}
 
-TEMP_SHIFT
-!byte 0
 ; --------------------------------------------------
 ; This subroutine pulls the address of its operand from the parameter blocks ADDR_OPER_LEFT
 ; The routine then doubles the value of its operand by simply performing a left shift. It
@@ -528,30 +519,60 @@ double32Bit
     lda (ARITH_SCRATCH1),y
     asl
     sta (ARITH_SCRATCH1),y
-    +saveCarry
 
     iny
     lda (ARITH_SCRATCH1),y
-    asl
-    ora TEMP_SHIFT
+    rol
     sta (ARITH_SCRATCH1),y
-    +saveCarry
 
     iny
     lda (ARITH_SCRATCH1),y
-    asl
-    ora TEMP_SHIFT
+    rol
     sta (ARITH_SCRATCH1),y
-    +saveCarry
 
     iny
     lda (ARITH_SCRATCH1),y
-    asl
-    ora TEMP_SHIFT
+    rol
     sta (ARITH_SCRATCH1),y
 
     rts
 
+
+; --------------------------------------------------
+; This subroutine pulls the address of its operand from the parameter blocks ADDR_OPER_LEFT
+; The routine then halves the value of its operand by simply performing a right shift. It
+; ignores the sign byte.
+;
+; The operand is modified, i.e. *op <- *op / 2 
+; --------------------------------------------------
+halve32Bit
+    lda ADDR_OPER_LEFT
+    sta ARITH_SCRATCH1
+    lda ADDR_OPER_LEFT+1 
+    sta ARITH_SCRATCH1+1
+
+    clc
+    ldy #4 
+    lda (ARITH_SCRATCH1),y                       
+    ror 
+    sta (ARITH_SCRATCH1),y
+    dey
+
+    lda (ARITH_SCRATCH1),y                       
+    ror 
+    sta (ARITH_SCRATCH1),y
+    dey
+
+    lda (ARITH_SCRATCH1),y                       
+    ror 
+    sta (ARITH_SCRATCH1),y
+    dey
+
+    lda (ARITH_SCRATCH1),y                       
+    ror 
+    sta (ARITH_SCRATCH1),y
+
+    rts
 
 LEFT_GREATER_EQUAL_RIGHT
 !byte 0

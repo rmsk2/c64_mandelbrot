@@ -92,12 +92,12 @@ splitByte
 }
 
 ARG1
-!byte 1,0,0,$c0,0
+!byte 1,0,0,$01,0
 ARG2
 !byte 0,0,0,$20,0
 DUMMY
 !byte 0 
-testAdd 
+testArith 
     +printFixedPoint ARG1
     +printFixedPoint ARG2
     lda #0
@@ -110,8 +110,9 @@ testAdd
     lda DUMMY
     jsr printByteCRLF
 
-    +callFunc add32Bit, ARG1, ARG2
-    +printFixedPoint ARG2
+    ;+callFunc add32Bit, ARG1, ARG2
+    +callFuncMono halve32Bit, ARG1
+    +printFixedPoint ARG1
 
     rts
 
