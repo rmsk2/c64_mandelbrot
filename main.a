@@ -1,10 +1,12 @@
 !to "mandelbr", cbm
 *=$c000
 
+;*=$0801
+;!byte $0c,$08,$e5,$07,$9e,$20,$32,$30,$37,$37,$00,$00,$00
+
 FAST_MUL = 1
 RES_X = 320
 RES_Y = 200
-BASIC_START = 8192+30
 
 JMP_TABLE
 ; ----------------------------
@@ -12,12 +14,12 @@ JMP_TABLE
 ; ----------------------------
 jmp initMandel ;0
 jmp nextMandel ;1
+jmp resetParameters;2
 ; ----------------------------
 ; administrative stuff
 ; ----------------------------
-jmp saveZeroPageMem ;2
-jmp restoreSavedZeroPageData;3
-jmp moveBasicStart; 4
+jmp saveZeroPageMem ;3
+jmp restoreSavedZeroPageData;4
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
@@ -26,7 +28,7 @@ jmp bitMapOff ;6
 jmp turnBitmapOn ;7
 jmp resetAllColours ;8
 ; ----------------------------
-; I/O stuff
+; Lower level I/O stuff
 ; ----------------------------
 jmp savePic ;9
 jmp loadPic ;10 
@@ -34,19 +36,20 @@ jmp readAndEvalErrorChannel ; 11
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp mandelLoop ; 12
-jmp loadAndDisplayPic ; 13
+jmp loadPicAndCheckError ; 12
+jmp mandelLoop ; 13
+jmp loadAndDisplayPic ; 14
 ; ----------------------------
 ; Mode switching
 ; ----------------------------
-jmp setMuticolor ; 14
-jmp setHires ; 15
+jmp setMuticolor ; 15
+jmp setHires ; 16
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 16
-jmp setFileNameAndLoad ; 17
-jmp testArith ; 18
+jmp setFileNameAndGo ; 17
+jmp setFileNameAndLoad ; 18
+jmp testArith ; 19
 
 ; ----------------------------
 PLOT_FUNC_VECTOR
@@ -64,6 +67,9 @@ RESET_COLOR_VECTOR
 BITMAP_ON_VECTOR
 !byte <turnHiresOn, >turnHiresOn
 ; ----------------------------
+RESET_PARAMS_VECTOR
+!byte <resetParametersHires, >resetParametersHires
+; ----------------------------
 
 
 drawPoint
@@ -80,6 +86,9 @@ resetAllColours
 
 turnBitmapOn
     jmp (BITMAP_ON_VECTOR)
+
+resetParameters
+    jmp (RESET_PARAMS_VECTOR)
 
 
 ; --------------------------------------------------
@@ -197,6 +206,24 @@ XN_SQUARE
 ; the sequence defined by the current point diverges
 VAL_MAX
 !byte 0,0,0,0,4
+
+; x offset to move in complex plane default picture (full resolution)
+DEFAULT_STEP_X
+!byte 0, $66, $66, $02, $00
+
+; Y offset to move in complex plane for next line of default picture
+DEFAULT_STEP_Y
+!byte 1, $5C, $8F, $02, $00
+
+; real part of upper left point of default picture
+DEFAULT_INIT_REAL
+!byte 1, 0, 0, 0, 2
+
+; imaginary part of upper left point of picture default picture
+DEFAULT_INIT_IMAG
+!byte 0, 0, 0, 0, 1
+; **************************************************
+
 
 !zone arith
 !source "arith16.a"
@@ -335,6 +362,33 @@ initMandel
 
 
 ; --------------------------------------------------
+; This routine resets the top left corner to use in the complex
+; plane and the stepping offsets in x and y direction to the default
+; values for the iconic mandelset picture in hires mode
+;
+; resetParameters has no return value. 
+; --------------------------------------------------
+resetParametersHires
+    +callFunc move32Bit, DEFAULT_STEP_X, STEP_X
+    +callFunc move32Bit, DEFAULT_STEP_Y, STEP_Y 
+    +callFunc move32Bit, DEFAULT_INIT_REAL, INIT_REAL
+    +callFunc move32Bit, DEFAULT_INIT_IMAG, INIT_IMAG       
+    rts
+
+; --------------------------------------------------
+; This routine resets the top left corner to use in the complex
+; plane and the stepping offsets in x and y direction to the default
+; values for the iconic mandelset picture in multicolor mode
+;
+; resetParameters has no return value. 
+; --------------------------------------------------
+resetParametersMulti
+    jsr resetParametersHires
+    +callFuncMono double32Bit, STEP_X
+    rts
+
+
+; --------------------------------------------------
 ; This routine configures the program to use the multicolor mode
 ;
 ; setMuticolor has no return value. 
@@ -346,6 +400,7 @@ setMuticolor
     +load16BitImmediate deInitMulticolor, GRAPHICS_OFF_VECTOR
     +load16BitImmediate resetMulticolors, RESET_COLOR_VECTOR
     +load16BitImmediate turnMulticolorOn, BITMAP_ON_VECTOR
+    +load16BitImmediate resetParametersMulti, RESET_PARAMS_VECTOR
 
     rts
 
@@ -361,6 +416,7 @@ setHires
     +load16BitImmediate deInitHires, GRAPHICS_OFF_VECTOR
     +load16BitImmediate resetColors, RESET_COLOR_VECTOR
     +load16BitImmediate turnHiresOn, BITMAP_ON_VECTOR
+    +load16BitImmediate resetParametersHires, RESET_PARAMS_VECTOR
 
     rts
 
@@ -459,7 +515,6 @@ mandelLoop
 
     jsr bitMapOff
     jsr savePic
-    jsr readAndEvalErrorChannel
     jsr restoreSavedZeroPageData
     rts
 
@@ -469,42 +524,23 @@ mandelLoop
 loadAndDisplayPic
     jsr saveZeroPageMem
     jsr loadPic
-    jsr readAndEvalErrorChannel
     lda DISK_ERROR
-    cmp #0
     bne .loadDiskError
     jsr turnBitmapOn
-    jsr restoreSavedZeroPageData
-    rts
-
 .loadDiskError
     jsr restoreSavedZeroPageData
     rts
 
 
 ; --------------------------------------------------
-; This routine changes the start of BASIC to make room for the 
-; bitmap memory (and possibly this machine language program). Execute
-; a CLR in BASIC after calling this routine. This sets the remaining
-; pointers at 47/48, 49/50, 51/52 to the correct values.
+; This routine loads the picture and checks the error channel 
 ; --------------------------------------------------
-moveBasicStart
-    ; the first byte of BASIC memory has to be a zero
-    lda #0
-    sta BASIC_START
-    ; set pointer to begin of basic program text
-    lda #<(BASIC_START+1)
-    sta 43
-    lda #>(BASIC_START+1)
-    sta 44
-    ; This emulates a NEW. An empty BASIC program is just two zero bytes.
-    lda #0
-    sta BASIC_START+1
-    sta BASIC_START+2
-    ; set begin of BASIC variables at the first byte after the empty
-    ; program
-    lda #<(BASIC_START+3)
-    sta 45
-    lda #>(BASIC_START+3)
-    sta 46
+loadPicAndCheckError
+    jsr saveZeroPageMem
+    jsr loadPic
+    jsr restoreSavedZeroPageData
     rts
+
+
+PROG_END
+    !byte 0

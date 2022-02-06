@@ -51,13 +51,8 @@ savePic
     ldy #>BITMAP_END+20
     lda #$c1
     jsr SAVE
-    bcs .saveError
     jsr readAndEvalErrorChannel
     rts
-.saveError
-    lda #DISK_IO_ERR
-    rts
-
 
 ; --------------------------------------------------
 ; loadPic loads a Mandelbrot picture into RAM at $2000
@@ -82,9 +77,8 @@ loadPic
     ldy #>BITMAP
     lda #$00                          ; do load instead of a verify
     jsr LOAD
-    bcs .loadError
     jsr readAndEvalErrorChannel
-    cmp #0
+    lda DISK_ERROR
     bne .errorDone                    ; Error channel returned an error
     tax                               ; save value in accu
 
@@ -96,13 +90,10 @@ loadPic
     iny
     cpy #20
     bne .copyParamsBack
-
     txa                               ; restore accu value
 .errorDone
     rts
-.loadError
-    lda #DISK_IO_ERR
-    rts
+
 
 ERR_BYTE_COUNTER
 !byte $00
@@ -119,6 +110,10 @@ ERROR_MSG_BUFFER
 ; OUTPUT: error code in accu.
 ; --------------------------------------------------
 readErrorChannel
+    ; reset previous error
+    lda #DISK_IO_OK
+    sta DISK_ERROR
+
     ; set error code to "00", ie OK
     lda #48
     sta ERROR_MSG_BUFFER
@@ -162,6 +157,8 @@ readErrorChannel
     rts
 .checkError
     ; room for additional error handling
+    lda #DISK_IO_ERR
+    sta DISK_ERROR
     jmp .close                        ; even if open failed we have to close the file
 
 
@@ -174,9 +171,17 @@ readErrorChannel
 ; --------------------------------------------------
 readAndEvalErrorChannel
     jsr readErrorChannel
+    lda DISK_ERROR
+    bne .doneEvalErr
     +load16BitImmediate ERROR_MSG_BUFFER, TMP_PTR
     jsr asciiToByte
     sta DISK_ERROR
+    rts
+.doneEvalErr
+    ; truncate error message string as it may be corrupt
+    lda #0
+    sta ERR_BYTE_COUNTER
+
     rts
 
 
