@@ -4,6 +4,7 @@
 FAST_MUL = 1
 RES_X = 320
 RES_Y = 200
+BASIC_START = 8192+30
 
 JMP_TABLE
 ; ----------------------------
@@ -16,35 +17,36 @@ jmp nextMandel ;1
 ; ----------------------------
 jmp saveZeroPageMem ;2
 jmp restoreSavedZeroPageData;3
+jmp moveBasicStart; 4
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
-jmp bitMapOn ;4
-jmp bitMapOff ;5
-jmp turnBitmapOn ;6
-jmp resetAllColours ;7
+jmp bitMapOn ;5
+jmp bitMapOff ;6
+jmp turnBitmapOn ;7
+jmp resetAllColours ;8
 ; ----------------------------
 ; I/O stuff
 ; ----------------------------
-jmp savePic ;8
-jmp loadPic ;9 
-jmp readAndEvalErrorChannel ; 10
+jmp savePic ;9
+jmp loadPic ;10 
+jmp readAndEvalErrorChannel ; 11
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp mandelLoop ; 11
-jmp loadAndDisplayPic ; 12
+jmp mandelLoop ; 12
+jmp loadAndDisplayPic ; 13
 ; ----------------------------
 ; Mode switching
 ; ----------------------------
-jmp setMuticolor ; 13
-jmp setHires ; 14
+jmp setMuticolor ; 14
+jmp setHires ; 15
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 15
-jmp setFileNameAndLoad ; 16
-jmp testArith ; 17
+jmp setFileNameAndGo ; 16
+jmp setFileNameAndLoad ; 17
+jmp testArith ; 18
 
 ; ----------------------------
 PLOT_FUNC_VECTOR
@@ -477,4 +479,15 @@ loadAndDisplayPic
 
 .loadDiskError
     jsr restoreSavedZeroPageData
+    rts
+
+
+
+moveBasicStart
+    lda #0
+    sta BASIC_START
+    lda #<(BASIC_START+1)
+    sta 43
+    lda #>(BASIC_START+1)
+    sta 44
     rts
