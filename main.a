@@ -482,12 +482,29 @@ loadAndDisplayPic
     rts
 
 
-
+; --------------------------------------------------
+; This routine changes the start of BASIC to make room for the 
+; bitmap memory (and possibly this machine language program). Execute
+; a CLR in BASIC after calling this routine. This sets the remaining
+; pointers at 47/48, 49/50, 51/52 to the correct values.
+; --------------------------------------------------
 moveBasicStart
+    ; the first byte of BASIC memory has to be a zero
     lda #0
     sta BASIC_START
+    ; set pointer to begin of basic program text
     lda #<(BASIC_START+1)
     sta 43
     lda #>(BASIC_START+1)
     sta 44
+    ; This emulates a NEW. An empty BASIC program is just two zero bytes.
+    lda #0
+    sta BASIC_START+1
+    sta BASIC_START+2
+    ; set begin of BASIC variables at the first byte after the empty
+    ; program
+    lda #<(BASIC_START+3)
+    sta 45
+    lda #>(BASIC_START+3)
+    sta 46
     rts
