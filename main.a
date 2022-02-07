@@ -1,5 +1,5 @@
 !to "mandelbr", cbm
-;INCLUDE_DIAG = 1
+INCLUDE_DIAG = 1
 FAST_MUL = 1
 
 
@@ -20,34 +20,34 @@ jmp deriveParametersFromPixel;4
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
-jmp bitMapOn ;7
-jmp bitMapOff ;8
-jmp turnBitmapOn ;9
-jmp resetAllColours ;10
+jmp bitMapOn ;5
+jmp bitMapOff ;6
+jmp turnBitmapOn ;7
+jmp resetAllColours ;8
 ; ----------------------------
 ; Lower level I/O stuff
 ; ----------------------------
-jmp savePic ;11
-jmp loadPic ;12 
-jmp readAndEvalErrorChannel ; 13
+jmp savePic ;9
+jmp loadPic ;10 
+jmp readAndEvalErrorChannel ; 11
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp mandelLoop ; 15
-jmp loadAndDisplayPic ; 16
+jmp mandelLoop ; 12
+jmp loadAndDisplayPic ; 13
 ; ----------------------------
 ; Mode switching
 ; ----------------------------
-jmp setMuticolor ; 17
-jmp setHires ; 18
+jmp setMuticolor ; 14
+jmp setHires ; 15
 
 !ifdef INCLUDE_DIAG {
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 19
-jmp setFileNameAndLoad ; 20
-jmp testArith ; 21
+jmp setFileNameAndGo ; 16
+jmp setFileNameAndLoad ; 17
+jmp testArith ; 18
 }
 
 ; ----------------------------
@@ -402,9 +402,9 @@ increaseZoomLevel
     +callFuncMono halve32Bit, STEP_Y
     rts
 
-TEMP_X
+.TEMP_X
 !byte 0,0
-TEMP_Y
+.TEMP_Y
 !byte 0
 ; --------------------------------------------------
 ; This routine determines the point in the complex plane for which the pixel
@@ -417,23 +417,23 @@ deriveParametersFromPixel
     +callFunc move32Bit, INIT_IMAG, IMAG
     +callFunc move32Bit, INIT_REAL, REAL
 
-    +load16BitImmediate 0, TEMP_X
+    +load16BitImmediate 0, .TEMP_X
 .loopDeriveX
-    +cmp16Bit COUNT_X, TEMP_X
+    +cmp16Bit COUNT_X, .TEMP_X
     beq .procYCoord
     +callFunc add32Bit, STEP_X, REAL
-    +inc16Bit TEMP_X
+    +inc16Bit .TEMP_X
     jmp .loopDeriveX
 
 .procYCoord
     lda #0
-    sta TEMP_Y
+    sta .TEMP_Y
 .loopDeriveY
-    lda TEMP_Y
+    lda .TEMP_Y
     cmp COUNT_Y
     beq .deriveDone
     +callFunc add32Bit, STEP_Y, IMAG
-    inc TEMP_Y
+    inc .TEMP_Y
     jmp .loopDeriveY
 
 .deriveDone
