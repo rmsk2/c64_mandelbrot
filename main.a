@@ -236,6 +236,9 @@ DEFAULT_INIT_IMAG
 !zone arith
 !source "arith16.a"
 
+!zone string
+!source "string.a"
+
 !ifdef INCLUDE_DIAG {
 !zone diag
 !source "diag.a"
