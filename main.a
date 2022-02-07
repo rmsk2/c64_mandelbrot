@@ -1,10 +1,13 @@
 !to "mandelbr", cbm
-*=$c000
-
-;*=$0801
-;!byte $0c,$08,$e5,$07,$9e,$20,$32,$30,$37,$37,$00,$00,$00
-
+;INCLUDE_DIAG = 1
 FAST_MUL = 1
+
+!ifdef INCLUDE_DIAG {
+*=$8000
+} else {
+*=$c000
+}
+
 RES_X = 320
 RES_Y = 200
 
@@ -15,41 +18,46 @@ JMP_TABLE
 jmp initMandel ;0
 jmp nextMandel ;1
 jmp resetParameters;2
+jmp increaseZoomLevel;3
+jmp deriveParametersFromPixel;4
 ; ----------------------------
 ; administrative stuff
 ; ----------------------------
-jmp saveZeroPageMem ;3
-jmp restoreSavedZeroPageData;4
+jmp saveZeroPageMem ;5
+jmp restoreSavedZeroPageData;6
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
-jmp bitMapOn ;5
-jmp bitMapOff ;6
-jmp turnBitmapOn ;7
-jmp resetAllColours ;8
+jmp bitMapOn ;7
+jmp bitMapOff ;8
+jmp turnBitmapOn ;9
+jmp resetAllColours ;10
 ; ----------------------------
 ; Lower level I/O stuff
 ; ----------------------------
-jmp savePic ;9
-jmp loadPic ;10 
-jmp readAndEvalErrorChannel ; 11
+jmp savePic ;11
+jmp loadPic ;12 
+jmp readAndEvalErrorChannel ; 13
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp loadPicAndCheckError ; 12
-jmp mandelLoop ; 13
-jmp loadAndDisplayPic ; 14
+jmp loadPicAndCheckError ; 14
+jmp mandelLoop ; 15
+jmp loadAndDisplayPic ; 16
 ; ----------------------------
 ; Mode switching
 ; ----------------------------
-jmp setMuticolor ; 15
-jmp setHires ; 16
+jmp setMuticolor ; 17
+jmp setHires ; 18
+
+!ifdef INCLUDE_DIAG {
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 17
-jmp setFileNameAndLoad ; 18
-jmp testArith ; 19
+jmp setFileNameAndGo ; 19
+jmp setFileNameAndLoad ; 20
+jmp testArith ; 21
+}
 
 ; ----------------------------
 PLOT_FUNC_VECTOR
@@ -228,8 +236,10 @@ DEFAULT_INIT_IMAG
 !zone arith
 !source "arith16.a"
 
+!ifdef INCLUDE_DIAG {
 !zone diag
 !source "diag.a"
+}
 
 !zone hires
 !source "hires.a"
@@ -387,6 +397,56 @@ resetParametersMulti
     +callFuncMono double32Bit, STEP_X
     rts
 
+; --------------------------------------------------
+; This routine halves the stepping width in x and y direction and thereby "zooms" 
+; into the Mandelbrot set
+;
+; increaseZoomLevel has no return value. 
+; --------------------------------------------------
+increaseZoomLevel
+    +callFuncMono halve32Bit, STEP_X
+    +callFuncMono halve32Bit, STEP_Y
+    rts
+
+TEMP_X
+!byte 0,0
+TEMP_Y
+!byte 0
+; --------------------------------------------------
+; This routine determines the point in the complex plane for which the pixel
+; at COUNT_X and COUNT_Y stands
+;
+; deriveParametersFromPixel has no return value. As a side effect it changes
+; INIT_REAL and INIT_IMAG 
+; --------------------------------------------------
+deriveParametersFromPixel
+    +callFunc move32Bit, INIT_IMAG, IMAG
+    +callFunc move32Bit, INIT_REAL, REAL
+
+    +load16BitImmediate 0, TEMP_X
+.loopDeriveX
+    +cmp16Bit COUNT_X, TEMP_X
+    beq .procYCoord
+    +callFunc add32Bit, STEP_X, REAL
+    +inc16Bit TEMP_X
+    jmp .loopDeriveX
+
+.procYCoord
+    lda #0
+    sta TEMP_Y
+.loopDeriveY
+    lda TEMP_Y
+    cmp COUNT_Y
+    beq .deriveDone
+    +callFunc add32Bit, STEP_Y, IMAG
+    inc TEMP_Y
+    jmp .loopDeriveY
+
+.deriveDone
+    +callFunc move32Bit, IMAG, INIT_IMAG
+    +callFunc move32Bit, REAL, INIT_REAL
+
+    rts
 
 ; --------------------------------------------------
 ; This routine configures the program to use the multicolor mode

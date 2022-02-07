@@ -212,3 +212,23 @@ setFileNameAndLoad
     jsr waitForKey
     jsr bitMapOff
     rts
+
+
+testDerive
+    +printFixedPoint INIT_REAL
+    +printFixedPoint INIT_IMAG
+    +printFixedPoint STEP_X
+    +printFixedPoint STEP_Y
+    jsr printCRLF
+    +load16BitImmediate 320, COUNT_X
+    lda #200
+    sta COUNT_Y
+    jsr deriveParametersFromPixel
+    +printFixedPoint INIT_REAL
+    +printFixedPoint INIT_IMAG
+    jsr printCRLF
+    jsr increaseZoomLevel
+    +printFixedPoint STEP_X
+    +printFixedPoint STEP_Y    
+
+    rts
