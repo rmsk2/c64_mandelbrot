@@ -2,11 +2,8 @@
 ;INCLUDE_DIAG = 1
 FAST_MUL = 1
 
-!ifdef INCLUDE_DIAG {
-*=$8000
-} else {
-*=$c000
-}
+
+*=$4500
 
 RES_X = 320
 RES_Y = 200
@@ -20,11 +17,6 @@ jmp nextMandel ;1
 jmp resetParameters;2
 jmp increaseZoomLevel;3
 jmp deriveParametersFromPixel;4
-; ----------------------------
-; administrative stuff
-; ----------------------------
-jmp saveZeroPageMem ;5
-jmp restoreSavedZeroPageData;6
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
@@ -41,7 +33,6 @@ jmp readAndEvalErrorChannel ; 13
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp loadPicAndCheckError ; 14
 jmp mandelLoop ; 15
 jmp loadAndDisplayPic ; 16
 ; ----------------------------
@@ -566,7 +557,6 @@ decideToSetPointColor
 ; This routine visualizes the Mandelbrot set 
 ; --------------------------------------------------
 mandelLoop
-    jsr saveZeroPageMem
     jsr initMandel
     jsr bitMapOn
 
@@ -578,30 +568,17 @@ mandelLoop
 
     jsr bitMapOff
     jsr savePic
-    jsr restoreSavedZeroPageData
     rts
 
 ; --------------------------------------------------
 ; This routine loads the picture and then switches to hires 
 ; --------------------------------------------------
 loadAndDisplayPic
-    jsr saveZeroPageMem
     jsr loadPic
     lda DISK_ERROR
     bne .loadDiskError
     jsr turnBitmapOn
 .loadDiskError
-    jsr restoreSavedZeroPageData
-    rts
-
-
-; --------------------------------------------------
-; This routine loads the picture and checks the error channel 
-; --------------------------------------------------
-loadPicAndCheckError
-    jsr saveZeroPageMem
-    jsr loadPic
-    jsr restoreSavedZeroPageData
     rts
 
 
