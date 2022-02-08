@@ -17,37 +17,39 @@ jmp nextMandel ;1
 jmp resetParameters;2
 jmp increaseZoomLevel;3
 jmp deriveParametersFromPixel;4
+jmp doubleStepX; 5
+jmp halveStepX; 6
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
-jmp bitMapOn ;5
-jmp bitMapOff ;6
-jmp turnBitmapOn ;7
-jmp resetAllColours ;8
+jmp bitMapOn ;7
+jmp bitMapOff ;8
+jmp turnBitmapOn ;9
+jmp resetAllColours ;10
 ; ----------------------------
 ; Lower level I/O stuff
 ; ----------------------------
-jmp savePic ;9
-jmp loadPic ;10 
-jmp readAndEvalErrorChannel ; 11
+jmp savePic ;11
+jmp loadPic ;12 
+jmp readAndEvalErrorChannel ; 13
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp mandelLoop ; 12
-jmp loadAndDisplayPic ; 13
+jmp mandelLoop ; 14
+jmp loadAndDisplayPic ; 15
 ; ----------------------------
 ; Mode switching
 ; ----------------------------
-jmp setMuticolor ; 14
-jmp setHires ; 15
+jmp setMuticolor ; 16
+jmp setHires ; 17
 
 !ifdef INCLUDE_DIAG {
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 16
-jmp setFileNameAndLoad ; 17
-jmp testArith ; 18
+jmp setFileNameAndGo ; 18
+jmp setFileNameAndLoad ; 19
+jmp testArith ; 20
 }
 
 ; ----------------------------
@@ -390,6 +392,33 @@ resetParametersMulti
     jsr resetParametersHires
     +callFuncMono double32Bit, STEP_X
     rts
+
+
+; --------------------------------------------------
+; This routine halves the stepping width in x direction. This
+; can be used when switching from multicolor to hires mode. As
+; there are twice as many pixels in x direction we need to halve
+; the stepping width to see the same area in the complex plane. 
+; 
+; halveStepX has no return value. 
+; --------------------------------------------------
+halveStepX
+    +callFuncMono halve32Bit, STEP_X
+    rts
+
+
+; --------------------------------------------------
+; This routine doubles the stepping width in x direction. This
+; can be used when switching from hires to multicolor mode. As
+; there are only halve the number of pixels in x direction we need
+; to double the stepping width to see the same area in the complex plane. 
+; 
+; doubleStepX has no return value. 
+; --------------------------------------------------
+doubleStepX
+    +callFuncMono double32Bit, STEP_X
+    rts    
+
 
 ; --------------------------------------------------
 ; This routine halves the stepping width in x and y direction and thereby "zooms" 
