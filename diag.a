@@ -88,6 +88,8 @@ testDerive
 !byte 0,0,0,0,0,0,0,0,0,0
 
 testInput
+    lda #10 
+    sta .OUT_STR
     +printStrAt 0, 10, .TEST_STR
     +inputStr .OUT_STR, .ALLOWED
     +printStrAt 0, 15, .OUT_STR
