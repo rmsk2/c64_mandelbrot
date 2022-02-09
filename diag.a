@@ -73,3 +73,22 @@ testDerive
     +printFixedPoint STEP_Y    
 
     rts
+
+
+.TEST_STR
+!byte 6
+!tx "TEST> "
+
+.ALLOWED
+!byte 16
+!tx "0123456789ABCDEF"
+
+.OUT_STR
+!byte 10
+!byte 0,0,0,0,0,0,0,0,0,0
+
+testInput
+    +printStrAt 0, 10, .TEST_STR
+    +inputStr .OUT_STR, .ALLOWED
+    +printStrAt 0, 15, .OUT_STR
+    rts

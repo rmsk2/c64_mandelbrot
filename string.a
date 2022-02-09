@@ -138,15 +138,15 @@ stringCopy
 
 !macro locate .posx, .posy {
     clc
-    ldx #.posx
-    ldy #.posy
+    ldx #.posy
+    ldy #.posx
     jsr PLOT
 } 
 
 !macro locateAddr .addrx, .addry {
     clc
-    ldx .addrx
-    ldy .addry
+    ldx .addry
+    ldy .addrx
     jsr PLOT
 } 
 
@@ -177,6 +177,100 @@ printString
 }
 
 !macro printStrAt .posx, .posy, .addr {
-    +locate .posx, posy
+    +locate .posx, .posy
     +printStr .addr
+}
+
+.LEN_OUTPUT
+!byte 0
+.LEN_ALLOWED
+!byte 0
+.INDEX_OUTPUT
+!byte 0
+.INPUT_CHAR
+!byte 0
+; --------------------------------------------------
+; This routine implements a robust string input allowing only characters
+; from a given set. The address of the target buffer has to be specified in
+; TEMP_PTR. TEMP_PTR2 has to point to the set of allowed characters.
+; The x register has to contain the length of the target buffer and the y
+; register the length of the set of allowed characters.
+;
+; This routine returns the length of the string entered in the accu
+; --------------------------------------------------
+getString
+    stx .LEN_OUTPUT
+    sty .LEN_ALLOWED
+    lda #0
+    sta .INDEX_OUTPUT
+
+.inputLoop
+    jsr showCursor
+    jsr waitForKey
+
+    cmp #13
+    beq .inputDone
+    cmp #20
+    beq .delete
+    sta .INPUT_CHAR
+    jsr .checkIfInSet
+    bne .inputLoop
+
+    lda .INPUT_CHAR
+    ldy .INDEX_OUTPUT
+    cpy .LEN_OUTPUT
+    beq .inputLoop
+    sta (TEMP_PTR), y
+    inc .INDEX_OUTPUT
+    jsr CHAROUT
+    jmp .inputLoop
+
+.delete
+    lda .INDEX_OUTPUT
+    beq .inputLoop
+    dec .INDEX_OUTPUT
+    lda #20
+    jsr CHAROUT
+    jmp .inputLoop
+
+.inputDone
+    jsr clearCursor
+    lda .INDEX_OUTPUT
+    rts
+
+
+.checkIfInSet
+    ldy #0
+.checkLoop
+    cmp (TEMP_PTR2),Y
+    beq .found                     ; zero flag is set when routine returns
+    iny 
+    cpy .LEN_ALLOWED
+    bne .checkLoop
+    ldy #1                         ; zero flag is clear when routine returns
+.found
+    rts
+
+showCursor
+    lda #164
+    jsr CHAROUT
+    lda #157
+    jsr CHAROUT
+    rts
+
+clearCursor
+    lda #32
+    jsr CHAROUT
+    lda #157
+    jsr CHAROUT
+    rts
+
+
+!macro inputStr .targetStr, .allowedStr {
+    +load16BitImmediate .targetStr+1, TEMP_PTR
+    ldx .targetStr
+    +load16BitImmediate .allowedStr+1, TEMP_PTR2
+    ldy .allowedStr
+    jsr getString
+    sta .targetStr
 }
