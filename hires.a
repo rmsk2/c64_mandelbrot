@@ -7,7 +7,8 @@ COLOR_DATA = $0400
 COLOR_RAM = $D800
 
 ADDR_POINTER = $9E;/$9F
-ZP_HELPADR1 = $03
+ADDR_POINTER2 = $03;/$04
+ZP_HELPADR1 = ADDR_POINTER2
 
 !macro memsetImmediate .val, .startAddr, .numBlocks {
     lda #.val
@@ -151,6 +152,39 @@ memsetCall
     bne .processBlock
     
     rts
+
+!macro memcpyAddr .addrSource, .addrTarget, .numBlocks {
+    lda #.numBlocks
+    sta TEMP_NUM_BLOCKS
+    +load16BitImmediate .addrSource, ADDR_POINTER
+    +load16BitImmediate .addrTarget, ADDR_POINTER2
+
+    jsr memcpyCall
+}
+
+; --------------------------------------------------
+; This routine copies a number of 256 byte block between two addresses. The two memory
+; areas must not overlap
+; 
+; ADDR_POINTER          has to contain the start address of the source memory area
+; ADDR_POINTER2         has to contain the start address of the target memory area
+; TEMP_NUM_BLOCKS       has to contain the number of 256 byte blocks to copy
+; --------------------------------------------------
+memcpyCall
+    ldy #0
+    ldx TEMP_NUM_BLOCKS
+.processBlockCpy
+    lda (ADDR_POINTER), y
+    sta (ADDR_POINTER2), y
+    iny
+    bne .processBlockCpy
+    inc ADDR_POINTER+1
+    inc ADDR_POINTER2+1
+    dex
+    bne .processBlockCpy
+    
+    rts
+
 
 PLOT_POS_X
 !byte 0,0

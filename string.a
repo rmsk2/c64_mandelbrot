@@ -136,6 +136,20 @@ stringCopy
     jsr stringCopy
 }
 
+!macro locate .posx, .posy {
+    clc
+    ldx #.posx
+    ldy #.posy
+    jsr PLOT
+} 
+
+!macro locateAddr .addrx, .addry {
+    clc
+    ldx .addrx
+    ldy .addry
+    jsr PLOT
+} 
+
 
 PRINT_LEN
 !byte 0
@@ -160,4 +174,9 @@ printString
 !macro printStr .addr {
     +load16BitImmediate .addr, TEMP_PTR
     jsr printString
+}
+
+!macro printStrAt .posx, .posy, .addr {
+    +locate .posx, posy
+    +printStr .addr
 }
