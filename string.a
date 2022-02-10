@@ -301,7 +301,7 @@ clearInputBuffer
 .loopClear
     cpy .TEMP_SIZE
     beq .doneClear 
-    jsr $FFD2
+    jsr CHAROUT
     iny
     jmp .loopClear
     
