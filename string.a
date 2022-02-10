@@ -201,6 +201,7 @@ printString
 getString
     stx .LEN_OUTPUT
     sty .LEN_ALLOWED
+    jsr clearInputBuffer
     lda #0
     sta .INDEX_OUTPUT
 
@@ -274,3 +275,40 @@ clearCursor
     jsr getString
     sta .targetStr
 }
+
+
+.TEMP_X
+!byte 0
+.TEMP_Y
+!byte 0
+.TEMP_SIZE
+!byte 0
+; --------------------------------------------------
+; clearInputBuffer prints as many spaces as the value of the accu indicates
+;
+; This routine does not return a value
+; --------------------------------------------------
+clearInputBuffer
+    sta .TEMP_SIZE
+
+    sec
+    jsr PLOT
+    stx .TEMP_Y
+    sty .TEMP_X
+
+    ldy #0
+    lda #32
+.loopClear
+    cpy .TEMP_SIZE
+    beq .doneClear 
+    jsr $FFD2
+    iny
+    jmp .loopClear
+    
+.doneClear
+    clc
+    ldx .TEMP_Y
+    ldy .TEMP_X
+    jsr PLOT
+
+    rts
