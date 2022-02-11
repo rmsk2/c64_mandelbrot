@@ -201,68 +201,69 @@ printString
 getString
     stx .LEN_OUTPUT
     sty .LEN_ALLOWED
-    jsr clearInputBuffer
+    txa
+    jsr printSpaces                            ; clear input text
     lda #0
-    sta .INDEX_OUTPUT
+    sta .INDEX_OUTPUT                          ; set index in output to 0 
 
 .inputLoop
-    jsr showCursor
+    jsr showCursor                             ; draw cursor at current position
     jsr waitForKey
 
-    cmp #13
-    beq .inputDone
-    cmp #20
-    beq .delete
+    cmp #13                                    ; CR 
+    beq .inputDone                             ; => We are done
+    cmp #20                                    ; DELETE
+    beq .delete                                ; delete one character from result string
     sta .INPUT_CHAR
-    jsr .checkIfInSet
-    bne .inputLoop
+    jsr .checkIfInSet                          ; check if typed character is allowed
+    bne .inputLoop                             ; Not allowed => try again
 
     lda .INPUT_CHAR
     ldy .INDEX_OUTPUT
-    cpy .LEN_OUTPUT
-    beq .inputLoop
-    sta (TEMP_PTR), y
-    inc .INDEX_OUTPUT
-    jsr CHAROUT
-    jmp .inputLoop
+    cpy .LEN_OUTPUT                            ; have we reached the maximum length?
+    beq .inputLoop                             ; yes => don't store
+    sta (TEMP_PTR), y                          ; store typed character
+    inc .INDEX_OUTPUT                          ; move to next position in target buffer
+    jsr CHAROUT                                ; print typed character
+    jmp .inputLoop                             ; let user type next character
 
 .delete
     lda .INDEX_OUTPUT
-    beq .inputLoop
-    dec .INDEX_OUTPUT
-    lda #20
+    beq .inputLoop                             ; Output index is 0 => do nothing
+    dec .INDEX_OUTPUT                          ; decrement the output position
+    lda #20                                    ; print delete character
     jsr CHAROUT
-    jmp .inputLoop
+    jmp .inputLoop                             ; let user enter next character
 
 .inputDone
-    jsr clearCursor
-    lda .INDEX_OUTPUT
+    jsr clearCursor                            ; delete cursor from screen
+    lda .INDEX_OUTPUT                          ; load length of target buffer in accu
     rts
 
 
 .checkIfInSet
     ldy #0
 .checkLoop
-    cmp (TEMP_PTR2),Y
-    beq .found                     ; zero flag is set when routine returns
+    cmp (TEMP_PTR2),Y              ; is typed character in allowed set
+    beq .found                     ; yes => zero flag is set when routine returns
     iny 
-    cpy .LEN_ALLOWED
-    bne .checkLoop
-    ldy #1                         ; zero flag is clear when routine returns
+    cpy .LEN_ALLOWED               
+    bne .checkLoop                 ; try next character
+    ldy #1                         ; typed character is nit allowed => zero flag is clear when routine returns
 .found
     rts
 
 showCursor
-    lda #164
-    jsr CHAROUT
+    lda #164                        
+    jsr CHAROUT                    ; print underscore
     lda #157
-    jsr CHAROUT
+    jsr CHAROUT                    ; print cursor left
     rts
 
 clearCursor
-    lda #32
+    lda #32                        ; print blank
     jsr CHAROUT
-    lda #157
+    lda #157                       ; print cursor left
     jsr CHAROUT
     rts
 
@@ -284,31 +285,72 @@ clearCursor
 .TEMP_SIZE
 !byte 0
 ; --------------------------------------------------
-; clearInputBuffer prints as many spaces as the value of the accu indicates
+; printSpaces prints as many spaces as the value of the accu indicates
 ;
 ; This routine does not return a value
 ; --------------------------------------------------
-clearInputBuffer
+printSpaces
     sta .TEMP_SIZE
 
     sec
-    jsr PLOT
+    jsr PLOT                              ; get cursor position
     stx .TEMP_Y
     sty .TEMP_X
 
     ldy #0
-    lda #32
-.loopClear
-    cpy .TEMP_SIZE
+    lda #32                               ; load code for space
+.loopClear                                ; print desired number of blanks
+    cpy .TEMP_SIZE                        ; check first, this handles the case with length 0 correctly
     beq .doneClear 
-    jsr CHAROUT
+    jsr CHAROUT                           ; print blank
     iny
     jmp .loopClear
-    
+
 .doneClear
-    clc
+    clc                                 
     ldx .TEMP_Y
     ldy .TEMP_X
-    jsr PLOT
+    jsr PLOT                              ; set cursor to original value
 
     rts
+
+
+.CMP_LENGTH
+!byte 0
+; --------------------------------------------------
+; This routine implements a string compare. TEMP_PTR has to point to the first
+; and TMP_PTR2 to the second string
+;
+; The zero flag is set when the zwo strings are equal.
+; --------------------------------------------------
+strCmp
+    ldy #0
+    lda (TEMP_PTR),y
+    cmp (TEMP_PTR2),y
+    bne .doneCmpNotEqual                    ; length is different => strings are different
+    sta .CMP_LENGTH                         ; length is equal, store it in .CMP_LENGTH
+    cmp #0                                  ; check if length is zero
+    beq .doneCmpEqual                       ; both strings are empty => done
+    iny                                     ; move index to first byte of string
+.cmpNext
+    lda (TEMP_PTR),y
+    cmp (TEMP_PTR2),y
+    bne .doneCmpNotEqual                    ; current bytes are unequal
+    cpy .CMP_LENGTH                         ; end reached?
+    beq .doneCmpEqual                       ; all bytes were equal
+    iny
+    jmp .cmpNext                            ; look at next byte
+
+.doneCmpEqual
+    lda #0                                  ; set zero flag
+    rts
+.doneCmpNotEqual
+    lda #1                                  ; clear zero flag
+    rts
+
+
+!macro strCmpAddr .addr1, .addr2 {
+    +load16BitImmediate .addr1, TEMP_PTR
+    +load16BitImmediate .addr2, TEMP_PTR2
+    jsr strCmp
+}

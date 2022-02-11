@@ -87,10 +87,29 @@ testDerive
 !byte 10
 !byte 0,0,0,0,0,0,0,0,0,0
 
+.CMP_STR
+!byte 0
+!tx "0011223344"
+
+.NOT_EQUAL
+!byte 9
+!tx "NOT EQUAL"
+
+.EQUAL
+!byte 5
+!tx "EQUAL"
+
+
 testInput
     lda #10 
     sta .OUT_STR
     +printStrAt 0, 10, .TEST_STR
     +inputStr .OUT_STR, .ALLOWED
-    +printStrAt 0, 15, .OUT_STR
+    +strCmpAddr .OUT_STR, .CMP_STR
+    bne .notEqual
+    +printStrAt 0, 15, .EQUAL
+    rts
+.notEqual
+    +printStrAt 0, 15, .NOT_EQUAL
+    +printStrAt 0, 16, .OUT_STR
     rts
