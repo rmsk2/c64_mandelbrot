@@ -1,0 +1,199 @@
+CMD_LEN = 3
+
+.COMMAND
+!byte 5
+!tx "CMD> "
+
+.CMD_CHARS
+!byte 26
+!tx "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+.CMD_BUFFER
+!byte CMD_LEN
+!byte 0,0,0
+
+.EXIT_COMMAND
+!byte 1
+!tx "X"
+
+.VAL_COMMAND
+!byte CMD_LEN
+!tx "VAL"
+
+.RUN_COMMAND
+!byte CMD_LEN
+!tx "RUN"
+
+.LOAD_COMMAND
+!byte CMD_LEN
+!tx "LOD"
+
+
+.COMMAND_NOT_RECOGNIZED
+!byte 22
+!tx "COMMAND NOT RECOGNIZED"
+
+.ALPHA
+!byte 50
+!tx "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.:-+#=() §$%&@"
+
+.CMD_TABLE 
+!byte <.VAL_COMMAND, >.VAL_COMMAND, <showValuesCommand, >showValuesCommand
+!byte <.RUN_COMMAND, >.RUN_COMMAND, <runCalcCommand, >runCalcCommand
+!byte <.LOAD_COMMAND, >.LOAD_COMMAND, <loadCommand, >loadCommand
+!byte 0,0,0,0 ; end marker
+
+
+readEvalPrintLoop
+.cmdLoop
+    +printStr .COMMAND
+    lda #CMD_LEN
+    sta .CMD_BUFFER
+    +inputStr .CMD_BUFFER, .CMD_CHARS
+    jsr printCRLF
+    +strCmpAddr .EXIT_COMMAND, .CMD_BUFFER
+    beq .done
+    jsr processCommand
+    jmp .cmdLoop
+.done
+    rts
+
+.CMD_COUNTER
+!byte 0
+.CMD_VECTOR
+!byte 0,0
+.NO_COMMAND
+!byte 0,0
+processCommand
+    lda #<.CMD_BUFFER
+    sta TEMP_PTR2
+    lda #>.CMD_BUFFER
+    sta TEMP_PTR2+1
+
+    ldx #0
+    stx .CMD_COUNTER
+.testCommand
+    ldx .CMD_COUNTER
+    lda .CMD_TABLE,x
+    sta TEMP_PTR
+    inx
+    lda .CMD_TABLE,x
+    sta TEMP_PTR+1
+    +cmp16Bit .NO_COMMAND, TEMP_PTR
+    beq .notFound
+    txa
+    pha
+    jsr strCmp
+    bne .nextCommand
+    pla
+    tax
+    inx
+    lda .CMD_TABLE,X
+    sta .CMD_VECTOR
+    inx    
+    lda .CMD_TABLE,X
+    sta .CMD_VECTOR+1
+    jmp (.CMD_VECTOR)
+.nextCommand
+    pla
+    tax
+    inx
+    inx
+    inx
+    stx .CMD_COUNTER
+    jmp .testCommand 
+
+.notFound
+    +printStr .COMMAND_NOT_RECOGNIZED
+    jsr printCRLF
+    rts
+
+.REAL_TXT
+!byte 8
+!tx "REAL  : "
+.IMAG_TXT
+!byte 8
+!tx "IMAG  : "
+.STEPX_TXT
+!byte 8
+!tx "STEP X: "
+.STEPY_TXT
+!byte 8
+!tx "STEP Y: "
+
+
+showValuesCommand
+    +printStr .REAL_TXT
+    +printFixedPoint INIT_REAL
+    +printStr .IMAG_TXT
+    +printFixedPoint INIT_IMAG
+    +printStr .STEPX_TXT
+    +printFixedPoint STEP_X
+    +printStr .STEPY_TXT
+    +printFixedPoint STEP_Y
+
+    rts
+
+
+runCalcCommand
+    jsr initMandel
+    jsr bitMapOn
+
+.loopUntilFinished
+    jsr nextMandel
+    lda COUNT_Y
+    cmp MAX_Y
+    bne .loopUntilFinished
+
+    jsr bitMapOff
+    rts
+
+
+
+.FILE_NAME
+!byte 16
+!tx "                "
+.RES_FILE_NAME
+!byte 0
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+
+.LOAD_FILE_NAME
+!byte 11
+!tx "LOAD FROM: "
+.PREFIX_SLOT
+!byte 2
+!tx "0:"
+.POSTFIX_SEQ_READ
+!byte 4
+!tx ",S,R"
+
+loadCommand
+    lda #0
+    sta .RES_FILE_NAME
+    lda #16
+    sta .FILE_NAME
+
+    +printStr .LOAD_FILE_NAME
+    +inputStr .FILE_NAME, .ALPHA
+
+    +strCpy .PREFIX_SLOT, .RES_FILE_NAME
+    +strCat .FILE_NAME, .RES_FILE_NAME
+    +strCat .POSTFIX_SEQ_READ, .RES_FILE_NAME
+    +strCpy .RES_FILE_NAME, PIC_FILE_NAME_LEN
+
+    jsr loadPic
+    lda DISK_ERROR
+    beq .waitForKey
+    jsr printCRLF
+    +printStr ERR_BYTE_COUNTER
+    jsr printCRLF
+    rts
+.waitForKey
+    jsr turnBitmapOn
+    jsr waitForKey
+    jsr bitMapOff
+    rts
+    

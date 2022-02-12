@@ -1,5 +1,5 @@
 !to "mandelbr", cbm
-INCLUDE_DIAG = 1
+;INCLUDE_DIAG = 1
 FAST_MUL = 1
 
 
@@ -9,47 +9,48 @@ RES_X = 320
 RES_Y = 200
 
 JMP_TABLE
+jmp readEvalPrintLoop; 0
 ; ----------------------------
 ; Calculation related stuff
 ; ----------------------------
-jmp initMandel ;0
-jmp nextMandel ;1
-jmp resetParameters;2
-jmp increaseZoomLevel;3
-jmp deriveParametersFromPixel;4
-jmp doubleStepX; 5
-jmp halveStepX; 6
+jmp initMandel ;1
+jmp nextMandel ;2
+jmp resetParameters;3
+jmp increaseZoomLevel;4
+jmp deriveParametersFromPixel;5
+jmp doubleStepX; 6
+jmp halveStepX; 7
 ; ----------------------------
 ; Graphics stuff
 ; ----------------------------
-jmp bitMapOn ;7
-jmp bitMapOff ;8
-jmp turnBitmapOn ;9
-jmp resetAllColours ;10
+jmp bitMapOn ;8
+jmp bitMapOff ;9
+jmp turnBitmapOn ;10
+jmp resetAllColours ;11
 ; ----------------------------
 ; Lower level I/O stuff
 ; ----------------------------
-jmp savePic ;11
-jmp loadPic ;12 
-jmp readAndEvalErrorChannel ; 13
+jmp savePic ;12
+jmp loadPic ;13 
+jmp readAndEvalErrorChannel ; 14
 ; ----------------------------
 ; High level stuff
 ; ----------------------------
-jmp mandelLoop ; 14
-jmp loadAndDisplayPic ; 15
+jmp mandelLoop ; 15
+jmp loadAndDisplayPic ; 16
 ; ----------------------------
 ; Mode switching
 ; ----------------------------
-jmp setMuticolor ; 16
-jmp setHires ; 17
+jmp setMuticolor ; 17
+jmp setHires ; 18
 
 !ifdef INCLUDE_DIAG {
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 18
-jmp setFileNameAndLoad ; 19
-jmp testArith ; 20
+jmp setFileNameAndGo ; 19
+jmp setFileNameAndLoad ; 20
+jmp testArith ; 21
 }
 
 ; ----------------------------
@@ -242,6 +243,10 @@ DEFAULT_INIT_IMAG
 
 !zone diskio
 !source "disk_io.a"
+
+!zone repl
+!source "repl.a"
+
 
 !zone main
 
