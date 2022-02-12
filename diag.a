@@ -204,7 +204,7 @@ testConv
 !byte 0,0,0,0,0,0,0,0,0,0
 !byte 0,0,0,0,0,0,0,0,0,0
 
-testCopy
+testCat
     lda #10
     sta .STR_TARGET
     sta .STR_SOURCE

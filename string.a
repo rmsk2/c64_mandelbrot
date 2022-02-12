@@ -23,7 +23,7 @@ printNumHex
     ldy #0
     lda (TEMP_PTR), y
     bne .printMinus
-    lda #43
+    lda #32
     jsr CHAROUT
     jmp .egal
 .printMinus
@@ -35,6 +35,11 @@ printNumHex
 .loopPrint
     lda (TEMP_PTR), y
     jsr printByte
+    cpy #4                           
+    bne .continuePrint
+    lda #46                                  ; print decimal point after first byte
+    jsr CHAROUT
+.continuePrint
     dey
     bne .loopPrint
     jsr printCRLF
