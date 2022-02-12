@@ -17,7 +17,7 @@ LO_NIBBLE
 ; This routine prints a fixed point number to the screen. The address
 ; of the number has to be given in $0003/$0004
 ;
-; The number of iterations performed is returned in NUM_ITER 
+; No other values are returned. 
 ; --------------------------------------------------
 printNumHex
     ldy #0
@@ -181,6 +181,12 @@ printString
     +printStr .addr
 }
 
+!macro printStrAtAddr .addrPosx, .addPosy, .addr {
+    +locateAddr .addrPosx, .addrPosy
+    +printStr .addr
+}
+
+
 .LEN_OUTPUT
 !byte 0
 .LEN_ALLOWED
@@ -270,6 +276,7 @@ clearCursor
 
 !macro inputStr .targetStr, .allowedStr {
     +load16BitImmediate .targetStr+1, TEMP_PTR
+    ; maximum length is current length of target string
     ldx .targetStr
     +load16BitImmediate .allowedStr+1, TEMP_PTR2
     ldy .allowedStr
@@ -335,9 +342,9 @@ strCmp
 .cmpNext
     lda (TEMP_PTR),y
     cmp (TEMP_PTR2),y
-    bne .doneCmpNotEqual                    ; current bytes are unequal
+    bne .doneCmpNotEqual                    ; current bytes are unequal => strings are different
     cpy .CMP_LENGTH                         ; end reached?
-    beq .doneCmpEqual                       ; all bytes were equal
+    beq .doneCmpEqual                       ; all bytes were equal => strings are equal
     iny
     jmp .cmpNext                            ; look at next byte
 
@@ -353,4 +360,134 @@ strCmp
     +load16BitImmediate .addr1, TEMP_PTR
     +load16BitImmediate .addr2, TEMP_PTR2
     jsr strCmp
+}
+
+
+; --------------------------------------------------
+; This routine appends the string to which TEMP_PTR points to the string to
+; which TEMP_PTR2 points. The caller has to ensure that there is enough room
+; in the target string.
+;
+; This routine has no return value
+; --------------------------------------------------
+.SOURCE_LEN
+!byte 0
+.READ_INDEX
+!byte 0
+.WRITE_INDEX
+!byte 0
+strCatCall
+    ldy #0
+    lda (TEMP_PTR),y
+    beq .catDone                        ; source string is empty => we are done
+    sta .SOURCE_LEN
+    lda (TEMP_PTR2),y                   ; load length byte of target string
+    sta .WRITE_INDEX                   
+    inc .WRITE_INDEX                    ; write position is current length + 1
+    ldy #1
+    sty .READ_INDEX                     ; read index is 1
+.loopStrCat
+    ; here y has to contain .READ_INDEX
+    lda (TEMP_PTR),Y                    ; load at read index
+    ldy .WRITE_INDEX
+    sta (TEMP_PTR2),Y                   ; store at write index
+    ldy .READ_INDEX
+    cpy .SOURCE_LEN
+    beq .adaptLength                    ; we have exhausted the source string
+
+    inc .WRITE_INDEX
+    inc .READ_INDEX
+    ldy .READ_INDEX 
+    jmp .loopStrCat
+
+.adaptLength
+    ; adapt length of target
+    ldy #0
+    lda .WRITE_INDEX
+    sta (TEMP_PTR2),y
+.catDone
+    rts 
+
+
+!macro strCat .addrStr1, .addrStr2 {
+    +load16BitImmediate .addrStr1, TEMP_PTR
+    +load16BitImmediate .addrStr2, TEMP_PTR2
+    jsr strCatCall
+}
+
+
+; --------------------------------------------------
+; This routine converts the string (containing only the characters 0-9) to which 
+; TEMP_PTR points to a 16bit number, the address of which has to be given in TEMP_PTR2.
+;
+; This routine sets the zero flag in case everything was OK
+; --------------------------------------------------
+.CONV_TAB
+!byte 0,10,20,30,40,50,60,70,80,90
+.CONV_TEMP1
+!byte 0,0
+.CONV_TEMP2
+!byte 0,0
+atoiCall
+    ldy #0
+    sty .CONV_TEMP1                     ; clear result
+    sty .CONV_TEMP1+1                   ; clear result
+
+    lda (TEMP_PTR),Y                   ; load length into y register
+    beq .atoiNotOk                     ; length 0 => Not expected
+    cmp #4
+    bcs .atoiNotOk                     ; length >= 4 => Not expected
+
+    ; process least significant digit
+    tay                                ; length into y register
+    lda (TEMP_PTR),Y                   ; load digit
+    sec
+    sbc #48                            ; 48 = '0'
+    sta .CONV_TEMP1
+
+    ; process next digit
+    dey
+    beq .atoiOk                        ; we are already done, there was only one digit
+    lda (TEMP_PTR),Y                   ; load next digit
+    sec
+    sbc #48                            ; 48 = '0'
+    tax
+    clc
+    lda .CONV_TAB,X                    ; multiply by 10
+    adc .CONV_TEMP1                    ; add multiplication result to temporary value
+    sta .CONV_TEMP1                    ; here the value can be at most 99
+
+    ; process most significant digit
+    dey
+    beq .atoiOk                        ; we are already done, there were only two digits
+    lda (TEMP_PTR),Y                   ; load next digit
+    sec
+    sbc #48                            ; 48 = '0'
+    ldx #100
+    jsr mul16Bit                       ; multiply digit by 100
+    stx .CONV_TEMP2                    ; multiplication result to .CONV_TEMP2
+    sta .CONV_TEMP2+1
+    
+    +add16Bit .CONV_TEMP2, .CONV_TEMP1 ; add temporary results to get final result
+
+.atoiOk
+    ; copy temp val to result result address
+    ldy #0
+    lda .CONV_TEMP1
+    sta (TEMP_PTR2),Y
+    iny
+    lda .CONV_TEMP1+1
+    sta (TEMP_PTR2),Y
+
+    lda #0                             ; set zero flag
+    rts
+.atoiNotOk
+    lda #1                             ; clear zero flag
+    rts
+
+
+!macro atoi .addrStr, .addrResult {
+    +load16BitImmediate .addrStr, TEMP_PTR
+    +load16BitImmediate .addrResult, TEMP_PTR2
+    jsr atoiCall
 }

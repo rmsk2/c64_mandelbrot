@@ -83,6 +83,14 @@ testDerive
 !byte 16
 !tx "0123456789ABCDEF"
 
+.DIGITS
+!byte 10
+!tx "0123456789"
+
+.ALPHA
+!byte 50
+!tx "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.:-+#=() §$%&@"
+
 .OUT_STR
 !byte 10
 !byte 0,0,0,0,0,0,0,0,0,0
@@ -99,6 +107,10 @@ testDerive
 !byte 5
 !tx "EQUAL"
 
+.ERROR
+!byte 5
+!tx "ERROR"
+
 
 testInput
     lda #10 
@@ -112,4 +124,56 @@ testInput
 .notEqual
     +printStrAt 0, 15, .NOT_EQUAL
     +printStrAt 0, 16, .OUT_STR
+    rts
+
+.CONV_RESULT
+!byte 0,0
+testConv
+    lda #4 
+    sta .OUT_STR
+    +printStrAt 0, 10, .TEST_STR
+    +inputStr .OUT_STR, .DIGITS
+    +atoi .OUT_STR, .CONV_RESULT
+    bne .convErr
+    jsr printCRLF
+    lda .CONV_RESULT+1
+    jsr printByte 
+    lda .CONV_RESULT
+    jsr printByteCRLF
+    rts
+.convErr
+    +printStrAt 0, 11, .ERROR
+    rts
+
+.ONE
+!byte 3
+!tx "1: "
+
+.TWO
+!byte 3
+!tx "2: "
+
+.STR_SOURCE
+!byte 10
+!byte 0,0,0,0,0,0,0,0,0,0
+.STR_TARGET
+!byte 10
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+
+testCopy
+    lda #10
+    sta .STR_TARGET
+    sta .STR_SOURCE
+    +printStrAt 0, 15, .ONE
+    +inputStr .STR_SOURCE, .ALPHA
+    +printStrAt 0, 16, .TWO
+    +inputStr .STR_TARGET, .ALPHA
+    +strCat .STR_SOURCE, .STR_TARGET
+    jsr printCRLF
+    lda #34
+    jsr CHAROUT
+    +printStr .STR_TARGET
+    lda #34
+    jsr CHAROUT
     rts
