@@ -28,6 +28,34 @@ CMD_LEN = 3
 !byte CMD_LEN
 !tx "LOD"
 
+.SAVE_COMMAND
+!byte CMD_LEN
+!tx "SAV"
+
+.SHOW_COMMAND
+!byte CMD_LEN
+!tx "SHO"
+
+.PIXEL_COMMAND
+!byte CMD_LEN
+!tx "PXL"
+
+.INC_ZOOM_COMMAND
+!byte CMD_LEN
+!tx "INZ"
+
+.MULTICOLOR_COMMAND
+!byte CMD_LEN
+!tx "MCL"
+
+.DOUBLE_X_STEP_COMMAND
+!byte CMD_LEN
+!tx "DBX"
+
+.SET_ITER_COMMAND
+!byte CMD_LEN
+!tx "SIT"
+
 
 .COMMAND_NOT_RECOGNIZED
 !byte 22
@@ -37,10 +65,22 @@ CMD_LEN = 3
 !byte 50
 !tx "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ.:-+#=() §$%&@"
 
+.DIGITS
+!byte 10
+!tx "0123456789"
+
+
 .CMD_TABLE 
 !byte <.VAL_COMMAND, >.VAL_COMMAND, <showValuesCommand, >showValuesCommand
 !byte <.RUN_COMMAND, >.RUN_COMMAND, <runCalcCommand, >runCalcCommand
 !byte <.LOAD_COMMAND, >.LOAD_COMMAND, <loadCommand, >loadCommand
+!byte <.SAVE_COMMAND, >.SAVE_COMMAND, <saveCommand, >saveCommand
+!byte <.SHOW_COMMAND, >.SHOW_COMMAND, <showCommand, >showCommand
+!byte <.PIXEL_COMMAND, >.PIXEL_COMMAND, <deriveFromPixelCommand, >deriveFromPixelCommand
+!byte <.INC_ZOOM_COMMAND, >.INC_ZOOM_COMMAND, <incrementZoomCommand, >incrementZoomCommand
+!byte <.MULTICOLOR_COMMAND, >.MULTICOLOR_COMMAND, <multicolorCommand, >multicolorCommand
+!byte <.DOUBLE_X_STEP_COMMAND, >.DOUBLE_X_STEP_COMMAND, <doubleXstepCommand, >doubleXstepCommand
+!byte <.SET_ITER_COMMAND, >.SET_ITER_COMMAND, <setMaxIterCommand, >setMaxIterCommand
 !byte 0,0,0,0 ; end marker
 
 
@@ -120,6 +160,9 @@ processCommand
 .STEPY_TXT
 !byte 8
 !tx "STEP Y: "
+.ITER_TXT
+!byte 8
+!tx "ITER  : "
 
 
 showValuesCommand
@@ -131,6 +174,9 @@ showValuesCommand
     +printFixedPoint STEP_X
     +printStr .STEPY_TXT
     +printFixedPoint STEP_Y
+    +printStr .ITER_TXT
+    lda MAX_ITER
+    jsr printByteCRLF
 
     rts
 
@@ -195,5 +241,155 @@ loadCommand
     jsr turnBitmapOn
     jsr waitForKey
     jsr bitMapOff
+    jsr printCRLF
     rts
     
+.INPUT_FILE_NAME
+!byte 9
+!tx "SAVE IN: "
+.PREFIX_OVERWRITE
+!byte 3
+!tx "@0:"
+.POSTFIX_SEQ
+!byte 4
+!tx ",S,W"
+
+
+saveCommand
+    lda #0
+    sta .RES_FILE_NAME
+    lda #16
+    sta .FILE_NAME
+
+    +printStr .INPUT_FILE_NAME
+    +inputStr .FILE_NAME, .ALPHA
+    
+    +strCpy .PREFIX_OVERWRITE, .RES_FILE_NAME
+    +strCat .FILE_NAME, .RES_FILE_NAME
+    +strCat .POSTFIX_SEQ, .RES_FILE_NAME
+    +strCpy .RES_FILE_NAME, PIC_FILE_NAME_LEN
+    jsr savePic
+    jsr printCRLF
+    rts
+
+showCommand
+    jsr turnBitmapOn
+    jsr waitForKey
+    jsr bitMapOff
+    jsr printCRLF
+    rts
+
+
+.INP_X_COORD
+!byte 3
+!tx "   "
+.INP_Y_COORD
+!byte 3
+!tx "   "
+.TXT_X_COORD
+!byte 9
+!tx "X COORD: "
+.TXT_Y_COORD
+!byte 9
+!tx "Y COORD: "
+.ERR_OUT_OF_RANGE
+!byte 18
+!tx "VALUE OUT OF RANGE"
+.ERR_NO_CONVERT
+!byte 15
+!tx "CAN NOT CONVERT"
+
+
+.CONV_RESULT_X
+!byte 0,0
+.CONV_RESULT_Y
+!byte 0,0
+.TWO_HUNDRED
+!byte 200,0
+deriveFromPixelCommand
+    lda #3
+    sta .INP_X_COORD
+    sta .INP_Y_COORD
+
+    +printStr .TXT_X_COORD
+    +inputStr .INP_X_COORD, .DIGITS
+    +atoi .INP_X_COORD, .CONV_RESULT_X
+    bne .convErr
+    +cmp16Bit .CONV_RESULT_X, MAX_X
+    bcs .tooLargeErr
+    jsr printCRLF
+
+    +printStr .TXT_Y_COORD
+    +inputStr .INP_Y_COORD, .DIGITS
+    +atoi .INP_Y_COORD, .CONV_RESULT_Y
+    bne .convErr
+    +cmp16Bit .CONV_RESULT_Y, .TWO_HUNDRED
+    bcs .tooLargeErr
+    jsr printCRLF
+
+    +move16Bit .CONV_RESULT_X, COUNT_X
+    lda .CONV_RESULT_Y
+    sta COUNT_Y
+    jsr deriveParametersFromPixel
+    jmp showValuesCommand
+.convErr
+    jsr printCRLF
+    +printStr .ERR_NO_CONVERT
+    jsr printCRLF
+    rts
+.tooLargeErr
+    jsr printCRLF
+    +printStr .ERR_OUT_OF_RANGE
+    jsr printCRLF
+    rts
+
+
+incrementZoomCommand
+    jsr increaseZoomLevel
+    jmp showValuesCommand
+
+
+multicolorCommand
+    jsr setMuticolor
+    rts
+
+
+doubleXstepCommand
+    jsr doubleStepX
+    jmp showValuesCommand
+
+.TXT_MAX_ITER
+!byte 10
+!tx "MAX ITER: "
+.INP_ITER
+!byte 3
+!tx "   "
+.CONV_RESULT_ITER
+!byte 0,0
+.MAX_ITER_CMP
+!byte 255,0
+setMaxIterCommand
+    lda #3
+    sta .INP_ITER
+
+    +printStr .TXT_MAX_ITER
+    +inputStr .INP_ITER, .DIGITS
+    +atoi .INP_ITER, .CONV_RESULT_ITER
+    bne .convErrIter
+    +cmp16Bit .CONV_RESULT_ITER, .MAX_ITER_CMP
+    bcs .tooLargeErrIter
+    jsr printCRLF
+    lda .CONV_RESULT_ITER
+    sta MAX_ITER
+    jmp showValuesCommand
+.convErrIter
+    jsr printCRLF
+    +printStr .ERR_NO_CONVERT
+    jsr printCRLF
+    rts
+.tooLargeErrIter
+    jsr printCRLF
+    +printStr .ERR_OUT_OF_RANGE
+    jsr printCRLF
+    rts
+

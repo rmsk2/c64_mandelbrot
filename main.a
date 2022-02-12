@@ -1,5 +1,5 @@
 !to "mandelbr", cbm
-;INCLUDE_DIAG = 1
+INCLUDE_DIAG = 1
 FAST_MUL = 1
 
 
@@ -48,9 +48,7 @@ jmp setHires ; 18
 ; ----------------------------
 ; For testing
 ; ----------------------------
-jmp setFileNameAndGo ; 19
-jmp setFileNameAndLoad ; 20
-jmp testArith ; 21
+jmp testArith ; 19
 }
 
 ; ----------------------------

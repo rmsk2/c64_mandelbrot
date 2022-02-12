@@ -91,11 +91,11 @@ ARITH_SCRATCH10 = $9F
 ; Z  flag is set in case these values are equal
 ; --------------------------------------------------
 !macro cmp16Bit .memAddr1, .memAddr2 {
-    lda .memAddr1
-    cmp .memAddr2
-    bne .unequal
     lda .memAddr1+1
     cmp .memAddr2+1
+    bne .unequal
+    lda .memAddr1
+    cmp .memAddr2
 .unequal
 }
 

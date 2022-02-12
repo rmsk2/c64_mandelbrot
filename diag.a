@@ -25,41 +25,6 @@ testArith
     rts
 
 
-.FILE_NAME
-!byte 16
-!tx "                "
-.RES_FILE_NAME
-!byte 0
-!byte 0,0,0,0,0,0,0,0,0,0
-!byte 0,0,0,0,0,0,0,0,0,0
-!byte 0,0,0,0,0,0,0,0,0,0
-!byte 0,0,0,0,0,0,0,0,0,0
-
-.INPUT_FILE_NAME
-!byte 9
-!tx "SAVE IN: "
-.PREFIX_OVERWRITE
-!byte 3
-!tx "@0:"
-.POSTFIX_SEQ
-!byte 4
-!tx ",S,W"
-setFileNameAndGo
-    lda #0
-    sta .RES_FILE_NAME
-    lda #16
-    sta .FILE_NAME
-
-    +printStr .INPUT_FILE_NAME
-    +inputStr .FILE_NAME, .ALPHA
-    
-    +strCpy .PREFIX_OVERWRITE, .RES_FILE_NAME
-    +strCat .FILE_NAME, .RES_FILE_NAME
-    +strCat .POSTFIX_SEQ, .RES_FILE_NAME
-    +strCpy .RES_FILE_NAME, PIC_FILE_NAME_LEN
-    jmp mandelLoop
-
-
 testDerive
     +printFixedPoint INIT_REAL
     +printFixedPoint INIT_IMAG
