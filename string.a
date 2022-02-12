@@ -121,7 +121,7 @@ stringCopy
     ldy #0
     lda (TEMP_PTR),y
     sta STR_LEN_TEMP
-    inc STR_LEN_TEMP                      ; take length byte into account
+    inc STR_LEN_TEMP                      ; take length byte into account, i.e. copy one more byte
 .copyLoop
     lda (TEMP_PTR),y
     sta (TEMP_PTR2),y
