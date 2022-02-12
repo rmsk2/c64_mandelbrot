@@ -421,18 +421,18 @@ strCatCall
 }
 
 
-; --------------------------------------------------
-; This routine converts the string (containing only the characters 0-9) to which 
-; TEMP_PTR points to a 16bit number, the address of which has to be given in TEMP_PTR2.
-;
-; This routine sets the zero flag in case everything was OK
-; --------------------------------------------------
 .CONV_TAB
 !byte 0,10,20,30,40,50,60,70,80,90
 .CONV_TEMP1
 !byte 0,0
 .CONV_TEMP2
 !byte 0,0
+; --------------------------------------------------
+; This routine converts the string (containing only the characters 0-9) to which 
+; TEMP_PTR points to a 16bit number, the address of which has to be given in TEMP_PTR2.
+;
+; This routine sets the zero flag in case everything was OK
+; --------------------------------------------------
 atoiCall
     ldy #0
     sty .CONV_TEMP1                     ; clear result
