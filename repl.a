@@ -56,6 +56,30 @@ CMD_LEN = 3
 !byte CMD_LEN
 !tx "SIT"
 
+.HIRES_COMMAND
+!byte CMD_LEN
+!tx "HIR"
+
+.HALVE_X_STEP_COMMAND
+!byte CMD_LEN
+!tx "HVX"
+
+.RESET_COMMAND
+!byte CMD_LEN
+!tx "RES"
+
+.SET_DEVICE_COMMAND
+!byte CMD_LEN
+!tx "DEV"
+
+.SET_COLS_COMMAND
+!byte CMD_LEN
+!tx "COL"
+
+.HELP_COMMAND
+!byte 1
+!tx "H"
+
 
 .COMMAND_NOT_RECOGNIZED
 !byte 22
@@ -81,7 +105,14 @@ CMD_LEN = 3
 !byte <.MULTICOLOR_COMMAND, >.MULTICOLOR_COMMAND, <multicolorCommand, >multicolorCommand
 !byte <.DOUBLE_X_STEP_COMMAND, >.DOUBLE_X_STEP_COMMAND, <doubleXstepCommand, >doubleXstepCommand
 !byte <.SET_ITER_COMMAND, >.SET_ITER_COMMAND, <setMaxIterCommand, >setMaxIterCommand
+!byte <.HIRES_COMMAND, >.HIRES_COMMAND, <hiresCommand, >hiresCommand
+!byte <.HALVE_X_STEP_COMMAND, >.HALVE_X_STEP_COMMAND, <halveXstepCommand, >halveXstepCommand
+!byte <.RESET_COMMAND, >.RESET_COMMAND, <resetCommand, >resetCommand
+!byte <.SET_DEVICE_COMMAND, >.SET_DEVICE_COMMAND, <setDeviceNumberCommand, >setDeviceNumberCommand
+!byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <notYetImplemented, >notYetImplemented
+!byte <.HELP_COMMAND, >.HELP_COMMAND, <notYetImplemented, >notYetImplemented
 !byte 0,0,0,0 ; end marker
+
 
 
 readEvalPrintLoop
@@ -163,6 +194,19 @@ processCommand
 .ITER_TXT
 !byte 8
 !tx "ITER  : "
+.DEVICE_TXT
+!byte 8
+!tx "DEVICE: "
+
+
+.COMMAND_NOT_IMPLEMENTED
+!byte 19
+!tx "NOT YET IMPLEMENTED"
+
+notYetImplemented
+    +printStr .COMMAND_NOT_IMPLEMENTED
+    jsr printCRLF
+    rts
 
 
 showValuesCommand
@@ -176,6 +220,9 @@ showValuesCommand
     +printFixedPoint STEP_Y
     +printStr .ITER_TXT
     lda MAX_ITER
+    jsr printByteCRLF
+    +printStr .DEVICE_TXT
+    lda DEVICE_NUM
     jsr printByteCRLF
 
     rts
@@ -354,9 +401,25 @@ multicolorCommand
     rts
 
 
+hiresCommand
+    jsr setHires
+    rts
+
+
 doubleXstepCommand
     jsr doubleStepX
     jmp showValuesCommand
+
+
+halveXstepCommand
+    jsr halveStepX
+    jmp showValuesCommand  
+  
+
+resetCommand
+    jsr resetParameters
+    jmp showValuesCommand
+
 
 .TXT_MAX_ITER
 !byte 10
@@ -393,3 +456,37 @@ setMaxIterCommand
     jsr printCRLF
     rts
 
+
+.TXT_DEVICE_NUMBER
+!byte 15
+!tx "DEVICE NUMBER: "
+.DEV_NUM_BUFFER
+!byte 2
+!byte 0,0
+.NEW_DEV_NUM
+!byte 0,0
+
+setDeviceNumberCommand
+    lda #2
+    sta .DEV_NUM_BUFFER
+    +printStr .TXT_DEVICE_NUMBER
+    +inputStr .DEV_NUM_BUFFER, .DIGITS
+    +atoi .DEV_NUM_BUFFER, .NEW_DEV_NUM
+    bne .convErrDevNum
+    lda .NEW_DEV_NUM
+    cmp #12
+    bcs .tooLargeErrDevNum
+    sta DEVICE_NUM
+    jsr printCRLF
+    jmp showValuesCommand
+
+.convErrDevNum
+    jsr printCRLF
+    +printStr .ERR_NO_CONVERT
+    jsr printCRLF
+    rts
+.tooLargeErrDevNum
+    jsr printCRLF
+    +printStr .ERR_OUT_OF_RANGE
+    jsr printCRLF
+    rts
