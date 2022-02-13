@@ -119,7 +119,9 @@ CMD_LEN = 3
 !byte 0,0,0,0 ; end marker
 
 
-
+; --------------------------------------------------
+; readEvalPrintLoop
+; --------------------------------------------------
 readEvalPrintLoop
 .cmdLoop
     +printStr .COMMAND
@@ -127,6 +129,8 @@ readEvalPrintLoop
     sta .CMD_BUFFER
     +inputStr .CMD_BUFFER, .CMD_CHARS
     jsr printCRLF
+    lda .CMD_BUFFER
+    beq .cmdLoop                                       ; do noting when user just pressed enter
     +strCmpAddr .EXIT_COMMAND, .CMD_BUFFER
     beq .done
     jsr processCommand
@@ -140,6 +144,9 @@ readEvalPrintLoop
 !byte 0,0
 .NO_COMMAND
 !byte 0,0
+; --------------------------------------------------
+; processCommand
+; --------------------------------------------------
 processCommand
     lda #<.CMD_BUFFER
     sta TEMP_PTR2
@@ -208,12 +215,18 @@ processCommand
 !byte 19
 !tx "NOT YET IMPLEMENTED"
 
+; --------------------------------------------------
+; notYetImplemented
+; --------------------------------------------------
 notYetImplemented
     +printStr .COMMAND_NOT_IMPLEMENTED
     jsr printCRLF
     rts
 
 
+; --------------------------------------------------
+; showValuesCommand
+; --------------------------------------------------
 showValuesCommand
     +printStr .REAL_TXT
     +printFixedPoint INIT_REAL
@@ -233,6 +246,9 @@ showValuesCommand
     rts
 
 
+; --------------------------------------------------
+; runCalcCommand
+; --------------------------------------------------
 runCalcCommand
     jsr initMandel
     jsr bitMapOn
@@ -247,6 +263,9 @@ runCalcCommand
     rts
 
 
+.ERR_FILE_NAME_EMPTY
+!byte 15
+!tx "FILE NAME EMPTY"
 
 .FILE_NAME
 !byte 16
@@ -268,6 +287,9 @@ runCalcCommand
 !byte 4
 !tx ",S,R"
 
+; --------------------------------------------------
+; loadCommand
+; --------------------------------------------------
 loadCommand
     lda #0
     sta .RES_FILE_NAME
@@ -276,6 +298,8 @@ loadCommand
 
     +printStr .LOAD_FILE_NAME
     +inputStr .FILE_NAME, .ALPHA
+    lda .FILE_NAME
+    beq .emptyFileName
 
     +strCpy .PREFIX_SLOT, .RES_FILE_NAME
     +strCat .FILE_NAME, .RES_FILE_NAME
@@ -295,6 +319,12 @@ loadCommand
     jsr bitMapOff
     jsr printCRLF
     rts
+.emptyFileName
+    jsr printCRLF
+    +printStr .ERR_FILE_NAME_EMPTY
+    jsr printCRLF
+    rts
+
     
 .INPUT_FILE_NAME
 !byte 9
@@ -306,7 +336,9 @@ loadCommand
 !byte 4
 !tx ",S,W"
 
-
+; --------------------------------------------------
+; saveCommand
+; --------------------------------------------------
 saveCommand
     lda #0
     sta .RES_FILE_NAME
@@ -315,6 +347,8 @@ saveCommand
 
     +printStr .INPUT_FILE_NAME
     +inputStr .FILE_NAME, .ALPHA
+    lda .FILE_NAME
+    beq .emptyFileNameSave
     
     +strCpy .PREFIX_OVERWRITE, .RES_FILE_NAME
     +strCat .FILE_NAME, .RES_FILE_NAME
@@ -323,7 +357,16 @@ saveCommand
     jsr savePic
     jsr printCRLF
     rts
+.emptyFileNameSave
+    jsr printCRLF
+    +printStr .ERR_FILE_NAME_EMPTY
+    jsr printCRLF
+    rts
 
+
+; --------------------------------------------------
+; showCommand
+; --------------------------------------------------
 showCommand
     jsr turnBitmapOn
     jsr waitForKey
@@ -358,6 +401,9 @@ showCommand
 !byte 0,0
 .TWO_HUNDRED
 !byte 200,0
+; --------------------------------------------------
+; deriveFromPixelCommand
+; --------------------------------------------------
 deriveFromPixelCommand
     lda #3
     sta .INP_X_COORD
@@ -396,31 +442,49 @@ deriveFromPixelCommand
     rts
 
 
+; --------------------------------------------------
+; incrementZoomCommand
+; --------------------------------------------------
 incrementZoomCommand
     jsr increaseZoomLevel
     jmp showValuesCommand
 
 
+; --------------------------------------------------
+; multicolorCommand
+; --------------------------------------------------
 multicolorCommand
     jsr setMuticolor
     rts
 
 
+; --------------------------------------------------
+; hiresCommand
+; --------------------------------------------------
 hiresCommand
     jsr setHires
     rts
 
 
+; --------------------------------------------------
+; doubleXstepCommand
+; --------------------------------------------------
 doubleXstepCommand
     jsr doubleStepX
     jmp showValuesCommand
 
 
+; --------------------------------------------------
+; halveXstepCommand
+; --------------------------------------------------
 halveXstepCommand
     jsr halveStepX
     jmp showValuesCommand  
   
 
+; --------------------------------------------------
+; resetCommand
+; --------------------------------------------------
 resetCommand
     jsr resetParameters
     jmp showValuesCommand
@@ -436,6 +500,9 @@ resetCommand
 !byte 0,0
 .MAX_ITER_CMP
 !byte 255,0
+; --------------------------------------------------
+; setMaxIterCommand
+; --------------------------------------------------
 setMaxIterCommand
     lda #3
     sta .INP_ITER
@@ -471,6 +538,9 @@ setMaxIterCommand
 .NEW_DEV_NUM
 !byte 0,0
 
+; --------------------------------------------------
+; setDeviceNumberCommand
+; --------------------------------------------------
 setDeviceNumberCommand
     lda #2
     sta .DEV_NUM_BUFFER
@@ -518,6 +588,9 @@ setDeviceNumberCommand
 !byte 0
 .BACKGROUND_COLOR
 !byte 0
+; --------------------------------------------------
+; setColorsCommand
+; --------------------------------------------------
 setColorsCommand
     +printStr .FIRST_COLOR_TXT
     jsr getColor
@@ -555,6 +628,9 @@ setColorsCommand
     rts
 
 
+; --------------------------------------------------
+; showColorsCommand
+; --------------------------------------------------
 showColorsCommand
     +printStr .FIRST_COLOR_TXT
     lda PIC_COLOURS
