@@ -74,7 +74,11 @@ CMD_LEN = 3
 
 .SET_COLS_COMMAND
 !byte CMD_LEN
-!tx "COL"
+!tx "SCL"
+
+.SHOW_COLS_COMMAND
+!byte CMD_LEN
+!tx "GCL"
 
 .HELP_COMMAND
 !byte 1
@@ -110,6 +114,7 @@ CMD_LEN = 3
 !byte <.RESET_COMMAND, >.RESET_COMMAND, <resetCommand, >resetCommand
 !byte <.SET_DEVICE_COMMAND, >.SET_DEVICE_COMMAND, <setDeviceNumberCommand, >setDeviceNumberCommand
 !byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <setColorsCommand, >setColorsCommand
+!byte <.SHOW_COLS_COMMAND, >.SHOW_COLS_COMMAND, <showColorsCommand, >showColorsCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <notYetImplemented, >notYetImplemented
 !byte 0,0,0,0 ; end marker
 
@@ -493,14 +498,14 @@ setDeviceNumberCommand
 
 
 .FIRST_COLOR_TXT
-!byte 7
-!tx "FIRST: "
+!byte 10
+!tx "FIRST   : "
 .SECOND_COLOR_TXT
-!byte 8
-!tx "SECOND: "
+!byte 10
+!tx "SECOND  : "
 .THIRD_COLOR_TXT
-!byte 7
-!tx "THIRD: "
+!byte 10
+!tx "THIRD   : "
 .BKGRND_COLOR_TXT
 !byte 10
 !tx "BACKGRND: "
@@ -549,6 +554,32 @@ setColorsCommand
 .doneError
     rts
 
+
+showColorsCommand
+    +printStr .FIRST_COLOR_TXT
+    lda PIC_COLOURS
+    and #$0F
+    jsr printByteCRLF
+
+    +printStr .SECOND_COLOR_TXT
+    lda PIC_COLOURS
+    lsr
+    lsr
+    lsr
+    lsr
+    jsr printByteCRLF
+
+    +printStr .THIRD_COLOR_TXT
+    lda THIRD_COLOUR
+    and #$0F
+    jsr printByteCRLF
+
+    +printStr .BKGRND_COLOR_TXT
+    lda BACKGROUND_COLOR
+    and #$0F
+    jsr printByteCRLF
+
+    rts
 
 .COLOR_NUM_BUFFER
 !byte 2
