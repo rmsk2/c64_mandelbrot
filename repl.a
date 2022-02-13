@@ -109,7 +109,7 @@ CMD_LEN = 3
 !byte <.HALVE_X_STEP_COMMAND, >.HALVE_X_STEP_COMMAND, <halveXstepCommand, >halveXstepCommand
 !byte <.RESET_COMMAND, >.RESET_COMMAND, <resetCommand, >resetCommand
 !byte <.SET_DEVICE_COMMAND, >.SET_DEVICE_COMMAND, <setDeviceNumberCommand, >setDeviceNumberCommand
-!byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <notYetImplemented, >notYetImplemented
+!byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <setColorsCommand, >setColorsCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <notYetImplemented, >notYetImplemented
 !byte 0,0,0,0 ; end marker
 
@@ -489,4 +489,101 @@ setDeviceNumberCommand
     jsr printCRLF
     +printStr .ERR_OUT_OF_RANGE
     jsr printCRLF
+    rts
+
+
+.FIRST_COLOR_TXT
+!byte 7
+!tx "FIRST: "
+.SECOND_COLOR_TXT
+!byte 8
+!tx "SECOND: "
+.THIRD_COLOR_TXT
+!byte 7
+!tx "THIRD: "
+.BKGRND_COLOR_TXT
+!byte 10
+!tx "BACKGRND: "
+
+.PIC_COL1
+!byte 0
+.PIC_COL2
+!byte 0
+.PIC_COL3
+!byte 0
+.BACKGROUND_COLOR
+!byte 0
+setColorsCommand
+    +printStr .FIRST_COLOR_TXT
+    jsr getColor
+    bcs .doneError
+    sta .PIC_COL1
+
+    +printStr .SECOND_COLOR_TXT
+    jsr getColor
+    bcs .doneError
+    sta .PIC_COL2
+
+    +printStr .THIRD_COLOR_TXT
+    jsr getColor
+    bcs .doneError
+    sta .PIC_COL3
+
+    +printStr .BKGRND_COLOR_TXT
+    jsr getColor
+    bcs .doneError
+    sta .BACKGROUND_COLOR
+
+    lda .PIC_COL2
+    asl
+    asl
+    asl
+    asl
+    ora .PIC_COL1
+    sta PIC_COLOURS
+    lda .PIC_COL3
+    sta THIRD_COLOUR
+    lda .BACKGROUND_COLOR
+    sta BACKGROUND_COLOR
+    rts    
+.doneError
+    rts
+
+
+.COLOR_NUM_BUFFER
+!byte 2
+!byte 0,0
+.NEW_COL_NUM
+!byte 0,0
+; --------------------------------------------------
+; This routine reads a color number from the keyboard.
+; 
+; The color number is returned in the accu. The value in the accu is valid
+; if the carry bit is clear.
+; --------------------------------------------------
+getColor
+    lda #2
+    sta .COLOR_NUM_BUFFER
+    +inputStr .COLOR_NUM_BUFFER, .DIGITS
+    +atoi .COLOR_NUM_BUFFER, .NEW_COL_NUM
+    bne .convErrColNum
+    lda .NEW_COL_NUM
+    cmp #16
+    bcs .tooLargeErrColNum
+    jsr printCRLF
+    lda .NEW_COL_NUM
+    clc                               ; unnecessary, but clearer => indicate success
+    rts
+
+.convErrColNum
+    jsr printCRLF
+    +printStr .ERR_NO_CONVERT
+    jsr printCRLF
+    sec                               ; indicate error
+    rts
+.tooLargeErrColNum
+    jsr printCRLF
+    +printStr .ERR_OUT_OF_RANGE
+    jsr printCRLF
+    sec                               ; indicate error
     rts
