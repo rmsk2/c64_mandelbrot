@@ -1,4 +1,10 @@
 CMD_LEN = 3
+SPRITE_0_VECTOR = 2040
+SPRITE_0_BLOCK = $3F
+SPRITE_0_ADDRESS = SPRITE_0_BLOCK * $40
+VIC_BASE = $D000
+JOYSTICK2 = $DC00
+SPRITE_COLOR = 2
 
 .COMMAND
 !byte 5
@@ -39,6 +45,10 @@ CMD_LEN = 3
 .PIXEL_COMMAND
 !byte CMD_LEN
 !tx "PXL"
+
+.SELECT_PIXEL_COMMAND
+!byte CMD_LEN
+!tx "SXL"
 
 .INC_ZOOM_COMMAND
 !byte CMD_LEN
@@ -115,6 +125,7 @@ CMD_LEN = 3
 !byte <.SET_DEVICE_COMMAND, >.SET_DEVICE_COMMAND, <setDeviceNumberCommand, >setDeviceNumberCommand
 !byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <setColorsCommand, >setColorsCommand
 !byte <.SHOW_COLS_COMMAND, >.SHOW_COLS_COMMAND, <showColorsCommand, >showColorsCommand
+!byte <.SELECT_PIXEL_COMMAND, >.SELECT_PIXEL_COMMAND, <selectPixelCommand, >selectPixelCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <notYetImplemented, >notYetImplemented
 !byte 0,0,0,0 ; end marker
 
@@ -694,3 +705,192 @@ getColor
     jsr printCRLF
     sec                               ; indicate error
     rts
+
+
+CROSSHAIR_ICON
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %11111111, %00000000, %11111111
+!byte %11111111, %00000000, %11111111
+!byte %11111111, %00000000, %11111111
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+!byte %00000000, %00111100, %00000000
+
+
+.SPRITE_X_POS
+!byte 0,0
+.SPRITE_Y_POS
+!byte 100
+; --------------------------------------------------
+; crosshairSymbolOn shows a crosshair sprite on screen
+;
+; INPUT:  None
+; OUTPUT: None
+; --------------------------------------------------
+crosshairSymbolOn
+    ldx #0
+.copySprite
+    lda CROSSHAIR_ICON, x
+    sta SPRITE_0_ADDRESS, x
+    inx
+    cpx #63
+    bne .copySprite
+
+    lda #0
+    sta .SPRITE_X_POS+1
+    lda #100
+    sta .SPRITE_X_POS
+    sta .SPRITE_Y_POS
+
+    ; set sprite block for sprite 0
+    lda #SPRITE_0_BLOCK
+    sta SPRITE_0_VECTOR
+
+    ; set sprite X position for sprite 0
+    lda .SPRITE_X_POS
+    sta VIC_BASE
+    lda VIC_BASE + 16
+    ora .SPRITE_X_POS+1
+    sta VIC_BASE + 16
+    ; set sprite 0 Y position
+    lda .SPRITE_Y_POS
+    sta VIC_BASE + 1
+
+    ; set color of sprite 0
+    lda #SPRITE_COLOR
+    sta VIC_BASE + 39
+
+    ; turn sprite 0 on
+    lda VIC_BASE +  21
+    ora #1
+    sta VIC_BASE + 21
+
+    rts
+
+
+; --------------------------------------------------
+; crosshairSymbolOff turns off a crosshair sprite on screen
+;
+; INPUT:  None
+; OUTPUT: None
+; --------------------------------------------------
+crosshairSymbolOff
+    ; turn sprite 0 off
+    lda VIC_BASE +  21
+    and #$FE
+    sta VIC_BASE + 21
+
+    rts
+
+
+.MIN_SPRITE_Y
+!byte 40
+.MAX_SPRITE_Y
+!byte 239
+.MIN_SPRITE_X
+!byte 12,0
+.MAX_SPRITE_X
+!byte $4c, 1
+; --------------------------------------------------
+; Wait for a joystick move and return ASCII Code of direction 
+; in accumulator. This is intended to be compatible with waitForKey
+; 
+; INPUT:  None
+; OUTPUT: ASCII code of read character in accumulator
+; --------------------------------------------------
+waitForJoystick
+.loopJoy
+    lda JOYSTICK2
+    cmp #$7e          ; up
+    beq .upFound
+    cmp #$7d          ; down
+    beq .downFound
+    cmp #$7b          ; left
+    beq .leftFound
+    cmp #$77          ; right   
+    beq .rightFound
+    cmp #$6f          ; fire
+    beq .quitFound
+    bne .loopJoy
+.upFound
+    lda .SPRITE_Y_POS
+    cmp .MIN_SPRITE_Y
+    beq .loopJoy
+    dec .SPRITE_Y_POS
+    jmp .setSpritePos
+.downFound
+    lda .SPRITE_Y_POS
+    cmp .MAX_SPRITE_Y
+    beq .loopJoy
+    inc .SPRITE_Y_POS
+    jmp .setSpritePos
+.leftFound
+    +cmp16Bit .MIN_SPRITE_X, .SPRITE_X_POS
+    beq .loopJoy
+    +dec16Bit .SPRITE_X_POS
+    jmp .setSpritePos
+.rightFound
+    +cmp16Bit .MAX_SPRITE_X, .SPRITE_X_POS
+    beq .loopJoy
+    +inc16Bit .SPRITE_X_POS
+    jmp .setSpritePos
+.quitFound
+    rts
+.setSpritePos
+    ; set sprite X position for sprite 0
+    lda .SPRITE_X_POS
+    sta VIC_BASE
+    lda VIC_BASE + 16
+    and #%11111110
+    ora .SPRITE_X_POS+1
+    sta VIC_BASE + 16
+
+    ;set sprite Y position for sprite 0
+    lda .SPRITE_Y_POS
+    sta VIC_BASE + 1
+
+    ldy #10
+    ldx #0
+.pause
+    inx
+    bne .pause
+    dey
+    bpl .pause
+
+    jmp .loopJoy
+
+
+; --------------------------------------------------
+; selectPixelCommand
+; --------------------------------------------------
+selectPixelCommand
+    jsr turnBitmapOn
+    jsr crosshairSymbolOn
+    jsr waitForJoystick
+    jsr crosshairSymbolOff
+    jsr bitMapOff
+
+    lda .SPRITE_Y_POS
+    sec
+    sbc .MIN_SPRITE_Y
+    sta COUNT_Y
+
+    +sub16Bit .MIN_SPRITE_X, .SPRITE_X_POS
+    +move16Bit .SPRITE_X_POS, COUNT_X
+
+    jsr deriveParametersFromPixel
+    jmp showValuesCommand

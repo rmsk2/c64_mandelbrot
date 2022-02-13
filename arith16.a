@@ -58,6 +58,20 @@ ARITH_SCRATCH10 = $9F
 }
 
 ; --------------------------------------------------
+; sub16Bit subtracts the value stored at .memAddr1 from the value stored at the
+; address .memAddr2. The result is stored in .memAddr2
+; --------------------------------------------------
+!macro sub16Bit .memAddr1, .memAddr2 {
+    sec
+    lda .memAddr2
+    sbc .memAddr1
+    sta .memAddr2
+    lda .memAddr2+1
+    sbc .memAddr1+1
+    sta .memAddr2+1
+}
+
+; --------------------------------------------------
 ; add16Bit implements a 16 bit add of the values stored at memAddr1 and memAddr2 
 ; The result is stored in .memAddr2
 ; --------------------------------------------------
@@ -85,6 +99,20 @@ ARITH_SCRATCH10 = $9F
     inc .memAddr+1
 .noCarryInc
 }
+
+; --------------------------------------------------
+; dec16Bit implements a 16 bit decrement of the 16 bit value stored at .memAddr 
+; --------------------------------------------------
+!macro dec16Bit .memAddr {
+    lda .memAddr
+    sec
+    sbc #1
+    sta .memAddr
+    lda .memAddr+1
+    sbc #0
+    sta .memAddr+1
+}
+
 
 ; --------------------------------------------------
 ; cmp16Bit compares the 16 bit values stored at memAddr1 and memAddr2 
