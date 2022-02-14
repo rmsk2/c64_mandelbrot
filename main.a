@@ -70,6 +70,9 @@ BITMAP_ON_VECTOR
 RESET_PARAMS_VECTOR
 !byte <resetParametersHires, >resetParametersHires
 ; ----------------------------
+TRANSFORM_X_COORD_VECTOR
+!byte <transformXHires, >transformXHires
+; ----------------------------
 
 
 drawPoint
@@ -89,6 +92,9 @@ turnBitmapOn
 
 resetParameters
     jmp (RESET_PARAMS_VECTOR)
+
+transformXCoord
+    jmp (TRANSFORM_X_COORD_VECTOR)
 
 
 ; --------------------------------------------------
@@ -396,6 +402,25 @@ resetParametersMulti
     +callFuncMono double32Bit, STEP_X
     rts
 
+; --------------------------------------------------
+; This routine can be used to transform the sprite coordinate which was
+; used to select a new start value while the bitmap on which this pixel was
+; selected was in hires. It does nothing, because in hires the coordinates
+; do not need to be transformed.
+; --------------------------------------------------
+transformXHires
+    rts
+
+; --------------------------------------------------
+; This routine can be used to transform the sprite coordinate which was
+; used to select a new start value while the bitmap on which this pixel was
+; selected was in multicolor mode. It halves the coordinate stored at 
+; COUNT_X
+; --------------------------------------------------
+transformXMulticolor
+    +halve16Bit COUNT_X
+    rts
+
 
 ; --------------------------------------------------
 ; This routine halves the stepping width in x direction. This
@@ -487,6 +512,7 @@ setMuticolor
     +load16BitImmediate resetMulticolors, RESET_COLOR_VECTOR
     +load16BitImmediate turnMulticolorOn, BITMAP_ON_VECTOR
     +load16BitImmediate resetParametersMulti, RESET_PARAMS_VECTOR
+    +load16BitImmediate transformXMulticolor, TRANSFORM_X_COORD_VECTOR
 
     rts
 
@@ -503,6 +529,7 @@ setHires
     +load16BitImmediate resetColors, RESET_COLOR_VECTOR
     +load16BitImmediate turnHiresOn, BITMAP_ON_VECTOR
     +load16BitImmediate resetParametersHires, RESET_PARAMS_VECTOR
+    +load16BitImmediate transformXHires, TRANSFORM_X_COORD_VECTOR
 
     rts
 

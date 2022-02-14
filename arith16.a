@@ -58,6 +58,20 @@ ARITH_SCRATCH10 = $9F
 }
 
 ; --------------------------------------------------
+; halve16Bit divides the 16 bit value stored at .memAddr by 2
+; --------------------------------------------------
+!macro halve16Bit .memAddr {
+    clc
+    lda .memAddr+1
+    ror
+    sta .memAddr+1
+    lda .memAddr
+    ror
+    sta .memAddr
+}
+
+
+; --------------------------------------------------
 ; sub16Bit subtracts the value stored at .memAddr1 from the value stored at the
 ; address .memAddr2. The result is stored in .memAddr2
 ; --------------------------------------------------
@@ -126,6 +140,23 @@ ARITH_SCRATCH10 = $9F
     cmp .memAddr2
 .unequal
 }
+
+; --------------------------------------------------
+; cmp16BitImmediate compares the 16 bit value stored at memAddr with
+; the immediate value given in .value.
+; 
+; Z  flag is set in case these values are equal. Carry is set
+; if .value is greater or equal than the value store at .memAddr
+; --------------------------------------------------
+!macro cmp16BitImmediate .value, .memAddr {
+    lda #>.value
+    cmp .memAddr+1
+    bne .unequal2
+    lda #<.value
+    cmp .memAddr
+.unequal2
+}
+
 
 !ifndef FAST_MUL {
 

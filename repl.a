@@ -6,6 +6,14 @@ VIC_BASE = $D000
 JOYSTICK2 = $DC00
 SPRITE_COLOR = 2
 
+SUPER_CPU = 1
+
+!ifndef SUPER_CPU {
+NUM_DELAY_LOOPS = 10
+} else {
+NUM_DELAY_LOOPS = 127
+}
+
 .COMMAND
 !byte 5
 !tx "CMD> "
@@ -806,11 +814,12 @@ crosshairSymbolOff
 .MAX_SPRITE_X
 !byte $4c, 1
 ; --------------------------------------------------
-; Wait for a joystick move and return ASCII Code of direction 
-; in accumulator. This is intended to be compatible with waitForKey
-; 
+; Use joystick to control are crosshair sprite on the screen which
+; can be used to select a new start value used for a following calculation.
+; This routine returns when the fire button is pressed.
+;  
 ; INPUT:  None
-; OUTPUT: ASCII code of read character in accumulator
+; OUTPUT: None
 ; --------------------------------------------------
 waitForJoystick
 .loopJoy
@@ -863,7 +872,7 @@ waitForJoystick
     lda .SPRITE_Y_POS
     sta VIC_BASE + 1
 
-    ldy #10
+    ldy #NUM_DELAY_LOOPS
     ldx #0
 .pause
     inx
@@ -890,7 +899,24 @@ selectPixelCommand
     sta COUNT_Y
 
     +sub16Bit .MIN_SPRITE_X, .SPRITE_X_POS
+    +cmp16BitImmediate 319, .SPRITE_X_POS        ; carry is set if 319 >= *.SPRITE_X_POS
+    bcs .noCorrection                            
+    +load16BitImmediate 319, .SPRITE_X_POS       ; value is >= 320 set value to 319 instead
+.noCorrection
     +move16Bit .SPRITE_X_POS, COUNT_X
+
+    jsr transformXCoord                          ; adapt x-coordinate accordingly in case a multicolor bitmap is used
+    
+    +printStr .TXT_Y_COORD
+    lda COUNT_Y
+    jsr printByteCRLF
+
+    +printStr .TXT_X_COORD
+    lda COUNT_X+1
+    jsr printByte
+    lda COUNT_X
+    jsr printByteCRLF
+    jsr printCRLF
 
     jsr deriveParametersFromPixel
     jmp showValuesCommand
