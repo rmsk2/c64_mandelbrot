@@ -6,12 +6,12 @@ VIC_BASE = $D000
 JOYSTICK2 = $DC00
 SPRITE_COLOR = 2
 
-SUPER_CPU = 1
+;SUPER_CPU = 1
 
 !ifndef SUPER_CPU {
-NUM_DELAY_LOOPS = 10
+NUM_DELAY_LOOPS = 15
 } else {
-NUM_DELAY_LOOPS = 127
+NUM_DELAY_LOOPS = 250
 }
 
 .COMMAND
@@ -134,7 +134,7 @@ NUM_DELAY_LOOPS = 127
 !byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <setColorsCommand, >setColorsCommand
 !byte <.SHOW_COLS_COMMAND, >.SHOW_COLS_COMMAND, <showColorsCommand, >showColorsCommand
 !byte <.SELECT_PIXEL_COMMAND, >.SELECT_PIXEL_COMMAND, <selectPixelCommand, >selectPixelCommand
-!byte <.HELP_COMMAND, >.HELP_COMMAND, <notYetImplemented, >notYetImplemented
+!byte <.HELP_COMMAND, >.HELP_COMMAND, <helpCommand, >helpCommand
 !byte 0,0,0,0 ; end marker
 
 
@@ -228,19 +228,6 @@ processCommand
 .DEVICE_TXT
 !byte 8
 !tx "DEVICE: "
-
-
-.COMMAND_NOT_IMPLEMENTED
-!byte 19
-!tx "NOT YET IMPLEMENTED"
-
-; --------------------------------------------------
-; notYetImplemented
-; --------------------------------------------------
-notYetImplemented
-    +printStr .COMMAND_NOT_IMPLEMENTED
-    jsr printCRLF
-    rts
 
 
 ; --------------------------------------------------
@@ -872,13 +859,14 @@ waitForJoystick
     lda .SPRITE_Y_POS
     sta VIC_BASE + 1
 
-    ldy #NUM_DELAY_LOOPS
+    ldy #0
     ldx #0
 .pause
     inx
     bne .pause
-    dey
-    bpl .pause
+    iny
+    cpy #NUM_DELAY_LOOPS
+    bne .pause
 
     jmp .loopJoy
 
@@ -920,3 +908,39 @@ selectPixelCommand
 
     jsr deriveParametersFromPixel
     jmp showValuesCommand
+
+
+
+.COMMAND_NOT_IMPLEMENTED
+!byte 19
+!tx "NOT YET IMPLEMENTED"
+; --------------------------------------------------
+; helpCommand
+; --------------------------------------------------
+helpCommand
+    ldx #0
+    ;stx .CMD_COUNTER
+.commandLoop
+    ;ldx .CMD_COUNTER
+    lda .CMD_TABLE,x
+    sta TEMP_PTR
+    inx
+    lda .CMD_TABLE,x
+    sta TEMP_PTR+1
+    +cmp16Bit .NO_COMMAND, TEMP_PTR
+    beq .allPrinted
+    txa
+    pha
+    jsr printString
+    jsr printCRLF
+    pla
+    tax
+    inx
+    inx
+    inx
+    ;stx .CMD_COUNTER
+    jmp .commandLoop 
+
+.allPrinted
+    rts
+
