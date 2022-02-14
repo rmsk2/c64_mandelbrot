@@ -919,9 +919,7 @@ selectPixelCommand
 ; --------------------------------------------------
 helpCommand
     ldx #0
-    ;stx .CMD_COUNTER
 .commandLoop
-    ;ldx .CMD_COUNTER
     lda .CMD_TABLE,x
     sta TEMP_PTR
     inx
@@ -938,7 +936,6 @@ helpCommand
     inx
     inx
     inx
-    ;stx .CMD_COUNTER
     jmp .commandLoop 
 
 .allPrinted
