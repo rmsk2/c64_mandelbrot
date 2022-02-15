@@ -6,7 +6,7 @@ VIC_BASE = $D000
 JOYSTICK2 = $DC00
 SPRITE_COLOR = 2
 
-;SUPER_CPU = 1
+SUPER_CPU = 1
 
 !ifndef SUPER_CPU {
 NUM_DELAY_LOOPS = 15
@@ -801,8 +801,8 @@ crosshairSymbolOff
 .MAX_SPRITE_X
 !byte $4c, 1
 ; --------------------------------------------------
-; Use joystick to control are crosshair sprite on the screen which
-; can be used to select a new start value used for a following calculation.
+; Use a joystick in port 2 to control a crosshair sprite on the screen
+; in order to select a new start value used for a following calculation.
 ; This routine returns when the fire button is pressed.
 ;  
 ; INPUT:  None
