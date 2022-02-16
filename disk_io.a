@@ -122,7 +122,10 @@ readAndEvalErrorChannel
     jsr readErrorChannel
     lda DISK_ERROR
     bne .doneEvalErr
-    +load16BitImmediate ERROR_MSG_BUFFER, TMP_PTR
+    lda #<ERROR_MSG_BUFFER
+    sta TMP_PTR
+    lda #>ERROR_MSG_BUFFER
+    sta TMP_PTR+1
     jsr asciiToByte
     sta DISK_ERROR
     rts

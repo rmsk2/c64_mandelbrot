@@ -12,13 +12,6 @@ jmp main
 DEVICE_NUM_LOADER
 !byte DEFAULT_DRIVE
 
-!macro load16BitImmediate .val, .addr {
-    lda #<.val
-    sta .addr
-    lda #>.val
-    sta .addr+1
-}
-
 !source "disk_io.a"
 
 ALREADY_LOADED
