@@ -22,7 +22,7 @@ DEVICE_NUM
 DISK_ERROR
 !byte 0
 
-!macro loadFile .addrFileName, .fileNameLen, .deviceNum, .targetAddr {
+!macro loadFile .addrFileName, .fileNameLen, .deviceNumAddr, .targetAddr {
     ; open 1,DEVICE_NUM,0,"..."
     lda #.fileNameLen
     ldx #<.addrFileName
@@ -30,7 +30,7 @@ DISK_ERROR
     jsr SETNAM
 
     lda #$01                          ; logical file number 1
-    ldx #.deviceNum
+    ldx .deviceNumAddr
     ldy #$00                          ; secondary address 0 
     jsr SETLFS
 

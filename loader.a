@@ -2,11 +2,15 @@
 
 TARGET_ADDRESS = $4500
 CHAROUT = $FFD2
+DEFAULT_DRIVE = 8
 
 *=$0801
 !byte $0c,$08,$e5,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
 
 jmp main
+
+DEVICE_NUM_LOADER
+!byte DEFAULT_DRIVE
 
 !macro load16BitImmediate .val, .addr {
     lda #<.val
@@ -26,7 +30,7 @@ FILE_NAME
 main
     lda ALREADY_LOADED
     bne .startProgram
-    +loadFile FILE_NAME, 8, 8, TARGET_ADDRESS
+    +loadFile FILE_NAME, 8, DEVICE_NUM_LOADER, TARGET_ADDRESS
     bne .errLoad
 .startProgram
     lda #1
