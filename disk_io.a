@@ -95,6 +95,28 @@ loadPic
     rts
 
 
+!macro loadFile .addrFileName, .fileNameLen, .deviceNum, .targetAddr {
+    ; open 1,DEVICE_NUM,0,"..."
+    lda #.fileNameLen
+    ldx #<.addrFileName
+    ldy #>.addrFileName
+    jsr SETNAM
+
+    lda #$01                          ; logical file number 1
+    ldx #.deviceNum
+    ldy #$00                          ; secondary address 0 
+    jsr SETLFS
+
+    ; set address of receiving buffer
+    ldx #<.targetAddr
+    ldy #>.targetAddr
+    lda #$00                          ; do load instead of a verify
+    jsr LOAD
+    jsr readAndEvalErrorChannel
+    lda DISK_ERROR
+}
+
+
 ERR_BYTE_COUNTER
 !byte $00
 ERROR_MSG_BUFFER
