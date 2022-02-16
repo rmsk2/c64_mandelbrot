@@ -8,48 +8,24 @@ FAST_MUL = 1
 RES_X = 320
 RES_Y = 200
 
-JMP_TABLE
-jmp readEvalPrintLoop; 0
-; ----------------------------
-; Calculation related stuff
-; ----------------------------
-jmp initMandel ;1
-jmp nextMandel ;2
-jmp resetParameters;3
-jmp increaseZoomLevel;4
-jmp deriveParametersFromPixel;5
-jmp doubleStepX; 6
-jmp halveStepX; 7
-; ----------------------------
-; Graphics stuff
-; ----------------------------
-jmp bitMapOn ;8
-jmp bitMapOff ;9
-jmp turnBitmapOn ;10
-jmp resetAllColours ;11
-; ----------------------------
-; Lower level I/O stuff
-; ----------------------------
-jmp savePic ;12
-jmp loadPic ;13 
-jmp readAndEvalErrorChannel ; 14
-; ----------------------------
-; High level stuff
-; ----------------------------
-jmp mandelLoop ; 15
-jmp loadAndDisplayPic ; 16
-; ----------------------------
-; Mode switching
-; ----------------------------
-jmp setMuticolor ; 17
-jmp setHires ; 18
+jmp readEvalPrintLoop
+
+!zone arith
+!source "arith16.a"
+
+!zone string
+!source "string.a"
 
 !ifdef INCLUDE_DIAG {
-; ----------------------------
-; For testing
-; ----------------------------
-jmp testArith ; 19
+!zone diag
+!source "diag.a"
 }
+
+!zone hires
+!source "hires.a"
+
+!zone repl
+!source "repl.a"
 
 ; ----------------------------
 PLOT_FUNC_VECTOR
@@ -149,10 +125,6 @@ MAX_X
 MAX_Y 
 !byte RES_Y
 
-; Device number used for load and save
-DEVICE_NUM
-!byte 8
-
 ; actual length of PIC_FILE_NAME
 PIC_FILE_NAME_LEN
 !byte 0
@@ -162,10 +134,6 @@ PIC_FILE_NAME
 !byte 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 !byte 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 !byte 0,0,0,0, 0,0,0,0
-
-; Contains error number of disk operation
-DISK_ERROR
-!byte 0
 
 ; current X position
 COUNT_X
@@ -230,26 +198,8 @@ DEFAULT_INIT_IMAG
 !byte 0, 0, 0, 0, 1
 ; **************************************************
 
-
-!zone arith
-!source "arith16.a"
-
-!zone string
-!source "string.a"
-
-!ifdef INCLUDE_DIAG {
-!zone diag
-!source "diag.a"
-}
-
-!zone hires
-!source "hires.a"
-
 !zone diskio
 !source "disk_io.a"
-
-!zone repl
-!source "repl.a"
 
 
 !zone main
@@ -639,6 +589,88 @@ loadAndDisplayPic
     jsr turnBitmapOn
 .loadDiskError
     rts
+
+
+; --------------------------------------------------
+; savePic saves a Mandelbrot picture to disk
+; 
+; INPUT:  None
+; OUTPUT: result DISK_IO_OK or DISK_IO_ERR in accu
+; --------------------------------------------------
+savePic
+    ; attach parameters of picture
+    ldy #0
+.copyParams
+    lda STEP_X,y
+    sta BITMAP_END,y
+    iny
+    cpy #20
+    bne .copyParams
+    
+    ; open 1,DEVICE_NUM,0,"....."
+    lda PIC_FILE_NAME_LEN                ; file name length
+    ldx #<PIC_FILE_NAME
+    ldy #>PIC_FILE_NAME
+    jsr SETNAM
+
+    lda #$01                                ; logical file number 1
+    ldx DEVICE_NUM                         ; device number
+    ldy #$00                                ; secondary address 0
+    jsr SETLFS
+
+    ; start address of block to save
+    lda #<BITMAP
+    sta $c1
+    lda #>BITMAP
+    sta $c2
+    ; end address of block to save
+    ldx #<BITMAP_END+20
+    ldy #>BITMAP_END+20
+    lda #$c1
+    jsr SAVE
+    jsr readAndEvalErrorChannel
+    rts
+
+; --------------------------------------------------
+; loadPic loads a Mandelbrot picture into RAM at $2000
+; 
+; INPUT:  None
+; OUTPUT: result DISK_IO_OK or DISK_IO_ERR in accu
+; --------------------------------------------------
+loadPic
+    ; open 1,DEVICE_NUM,0,"..."
+    lda PIC_FILE_NAME_LEN          ; file name length
+    ldx #<PIC_FILE_NAME
+    ldy #>PIC_FILE_NAME
+    jsr SETNAM
+
+    lda #$01                          ; logical file number 1
+    ldx DEVICE_NUM                   ; device number
+    ldy #$00                          ; secondary address 0 
+    jsr SETLFS
+
+    ; set address of receiving buffer
+    ldx #<BITMAP
+    ldy #>BITMAP
+    lda #$00                          ; do load instead of a verify
+    jsr LOAD
+    jsr readAndEvalErrorChannel
+    lda DISK_ERROR
+    bne .errorDone                    ; Error channel returned an error
+    tax                               ; save value in accu
+
+    ; copy paramters of picture back
+    ldy #0
+.copyParamsBack
+    lda BITMAP_END,y
+    sta STEP_X,y
+    iny
+    cpy #20
+    bne .copyParamsBack
+    txa                               ; restore accu value
+.errorDone
+    rts
+
 
 
 PROG_END
