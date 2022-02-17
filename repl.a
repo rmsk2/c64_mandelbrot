@@ -252,23 +252,43 @@ showValuesCommand
     rts
 
 
+.SAVED_BACKGROUND_COLOR
+!byte 0
 ; --------------------------------------------------
 ; runCalcCommand
 ; --------------------------------------------------
 runCalcCommand
+.keyStillPressed
+    jsr GETIN
+    cmp #0
+    bne .keyStillPressed
+
+    lda 53281
+    sta .SAVED_BACKGROUND_COLOR
+
     jsr initMandel
     jsr bitMapOn
 
     jsr resetAndStartRTC
 .loopUntilFinished
     jsr nextMandel
+
+    jsr GETIN
+    cmp #0
+    bne .breakRequested
+
     lda COUNT_Y
     cmp MAX_Y
     bne .loopUntilFinished
 
+.breakRequested
     jsr bitMapOff
     jsr getElapsedTime
     jsr stopRTC
+
+    lda .SAVED_BACKGROUND_COLOR
+    sta 53281
+
     +printStr ELAPSED_TIME_DESC
     +printStr ELAPSED_TIME_STR
     jsr printCRLF
@@ -963,7 +983,11 @@ ELAPSED_TIME_STR
 ELAPSED_TIME_DESC
 !byte 14
 !tx "ELAPSED TIME: "
-
+; --------------------------------------------------
+; getElapsedTime reads the current time of day from the CIA 1
+; 
+; The output value is directly written to ELAPSED_TIME_STR.
+; --------------------------------------------------
 getElapsedTime
     lda .CIA_RTC_HOURS                ; this freezes the RTC registers
     jsr splitByte
