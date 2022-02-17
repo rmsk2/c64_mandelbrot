@@ -259,6 +259,7 @@ runCalcCommand
     jsr initMandel
     jsr bitMapOn
 
+    jsr resetAndStartRTC
 .loopUntilFinished
     jsr nextMandel
     lda COUNT_Y
@@ -266,6 +267,11 @@ runCalcCommand
     bne .loopUntilFinished
 
     jsr bitMapOff
+    jsr getElapsedTime
+    jsr stopRTC
+    +printStr ELAPSED_TIME_DESC
+    +printStr ELAPSED_TIME_STR
+    jsr printCRLF
     rts
 
 
@@ -939,5 +945,82 @@ helpCommand
     jmp .commandLoop 
 
 .allPrinted
+    lda #88                                 ; add X command to help, as it is built in
+    jsr CHAROUT
+    jsr printCRLF
     rts
 
+
+.CIA_RTC_TENTH_SECONDS = $DC08
+.CIA_RTC_SECONDS = $DC09
+.CIA_RTC_MINUTES = $DC0A
+.CIA_RTC_HOURS = $DC0B
+
+ELAPSED_TIME_STR
+!byte 8
+!tx "00:00:00"
+
+ELAPSED_TIME_DESC
+!byte 14
+!tx "ELAPSED TIME: "
+
+getElapsedTime
+    lda .CIA_RTC_HOURS                ; this freezes the RTC registers
+    jsr splitByte
+    tay
+    lda .DIGITS+1, X
+    sta ELAPSED_TIME_STR + 2
+    lda .DIGITS+1, y
+    sta ELAPSED_TIME_STR + 1
+
+    lda .CIA_RTC_MINUTES
+    jsr splitByte
+    tay
+    lda .DIGITS+1, X
+    sta ELAPSED_TIME_STR + 5
+    lda .DIGITS+1, y
+    sta ELAPSED_TIME_STR + 4
+
+    lda .CIA_RTC_SECONDS
+    jsr splitByte
+    tay
+    lda .DIGITS+1, X
+    sta ELAPSED_TIME_STR + 8
+    lda .DIGITS+1, y
+    sta ELAPSED_TIME_STR + 7
+
+    lda .CIA_RTC_TENTH_SECONDS               ; unfreeze registers
+
+    rts
+ 
+
+; --------------------------------------------------
+; resetAndStartRTC sets the system time of day clock to 00:00:00 and (re)starts it
+; 
+; INPUT:  None
+; OUTPUT: None
+; --------------------------------------------------
+resetAndStartRTC
+    ; set rtc to 0
+    lda #$00
+    sta .CIA_RTC_HOURS
+    sta .CIA_RTC_MINUTES
+    sta .CIA_RTC_SECONDS
+    sta .CIA_RTC_TENTH_SECONDS               ; this starts the RTC
+    lda .CIA_RTC_TENTH_SECONDS               ; unfreeze RTC registers
+
+    rts
+
+
+; --------------------------------------------------
+; stopRTC stops the RTC
+; 
+; INPUT:  None
+; OUTPUT: None
+; --------------------------------------------------
+stopRTC
+    sei 
+    lda .CIA_RTC_HOURS
+    sta .CIA_RTC_HOURS
+    cli
+    rts
