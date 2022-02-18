@@ -661,7 +661,7 @@ loadPic
     bne .errorDone                    ; Error channel returned an error
     tax                               ; save value in accu
 
-    ; copy paramters of picture back
+    ; copy parameters of picture back
     ldy #0
 .copyParamsBack
     lda BITMAP_END,y
