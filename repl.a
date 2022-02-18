@@ -1077,8 +1077,6 @@ resetAndStartRTC
 ; OUTPUT: None
 ; --------------------------------------------------
 stopRTC
-    sei 
     lda .CIA_RTC_HOURS
     sta .CIA_RTC_HOURS
-    cli
     rts
