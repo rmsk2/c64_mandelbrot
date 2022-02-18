@@ -6,7 +6,6 @@ VIC_BASE = $D000
 JOYSTICK2 = $DC00
 SPRITE_COLOR = 2
 
-;SUPER_CPU = 1
 
 !ifndef SUPER_CPU {
 NUM_DELAY_LOOPS = 15
@@ -223,11 +222,11 @@ processCommand
 !byte 8
 !tx "STEP Y: "
 .ITER_TXT
-!byte 8
-!tx "ITER  : "
+!byte 9
+!tx "ITER  : $"
 .DEVICE_TXT
-!byte 8
-!tx "DEVICE: "
+!byte 9
+!tx "DEVICE: $"
 
 
 ; --------------------------------------------------
@@ -537,8 +536,8 @@ resetCommand
 
 
 .TXT_MAX_ITER
-!byte 10
-!tx "MAX ITER: "
+!byte 11
+!tx "MAX ITER: $"
 .INP_ITER
 !byte 3
 !tx "   "
@@ -576,8 +575,8 @@ setMaxIterCommand
 
 
 .TXT_DEVICE_NUMBER
-!byte 15
-!tx "DEVICE NUMBER: "
+!byte 16
+!tx "DEVICE NUMBER: $"
 .DEV_NUM_BUFFER
 !byte 2
 !byte 0,0
@@ -614,17 +613,17 @@ setDeviceNumberCommand
 
 
 .FIRST_COLOR_TXT
-!byte 10
-!tx "FIRST   : "
+!byte 11
+!tx "FIRST   : $"
 .SECOND_COLOR_TXT
-!byte 10
-!tx "SECOND  : "
+!byte 11
+!tx "SECOND  : $"
 .THIRD_COLOR_TXT
-!byte 10
-!tx "THIRD   : "
+!byte 11
+!tx "THIRD   : $"
 .BKGRND_COLOR_TXT
-!byte 10
-!tx "BACKGRND: "
+!byte 11
+!tx "BACKGRND: $"
 
 .PIC_COL1
 !byte 0
@@ -911,15 +910,29 @@ waitForJoystick
     jmp .loopJoy
 
 
+.TXT_X_COORD_DOLLAR
+!byte 10
+!tx "X COORD: $"
+.TXT_Y_COORD_DOLLAR
+!byte 10
+!tx "Y COORD: $"
+
+
 ; --------------------------------------------------
 ; selectPixelCommand
 ; --------------------------------------------------
 selectPixelCommand
+    lda 53281
+    sta .SAVED_BACKGROUND_COLOR
+
     jsr turnBitmapOn
     jsr crosshairSymbolOn
     jsr waitForJoystick
     jsr crosshairSymbolOff
     jsr bitMapOff
+
+    lda .SAVED_BACKGROUND_COLOR
+    sta 53281
 
     lda .SPRITE_Y_POS
     sec
@@ -935,11 +948,11 @@ selectPixelCommand
 
     jsr transformXCoord                          ; adapt x-coordinate accordingly in case a multicolor bitmap is used
     
-    +printStr .TXT_Y_COORD
+    +printStr .TXT_Y_COORD_DOLLAR
     lda COUNT_Y
     jsr printByteCRLF
 
-    +printStr .TXT_X_COORD
+    +printStr .TXT_X_COORD_DOLLAR
     lda COUNT_X+1
     jsr printByte
     lda COUNT_X
@@ -1040,10 +1053,12 @@ getElapsedTime
 ; OUTPUT: None
 ; --------------------------------------------------
 resetAndStartRTC
+    !ifdef CLOCK_50_HZ {
     ; set base frequency for RTC to 50Hz 
     lda .CIA_CONTROL_REG
     ora #%10000000
     sta .CIA_CONTROL_REG
+    }
     ; set rtc to 0
     lda #$00
     sta .CIA_RTC_HOURS
