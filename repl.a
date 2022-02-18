@@ -564,6 +564,9 @@ resetCommand
     jmp showValuesCommand
 
 
+.TXT_MAX_ITER_INPUT
+!byte 10
+!tx "MAX ITER: "
 .TXT_MAX_ITER
 !byte 11
 !tx "MAX ITER: $"
@@ -581,7 +584,7 @@ setMaxIterCommand
     lda #3
     sta .INP_ITER
 
-    +printStr .TXT_MAX_ITER
+    +printStr .TXT_MAX_ITER_INPUT
     +inputStr .INP_ITER, .DIGITS
     +atoi .INP_ITER, .CONV_RESULT_ITER
     bne .convErrIter
@@ -603,6 +606,9 @@ setMaxIterCommand
     rts
 
 
+.TXT_DEVICE_NUMBER_INPUT
+!byte 15
+!tx "DEVICE NUMBER: "
 .TXT_DEVICE_NUMBER
 !byte 16
 !tx "DEVICE NUMBER: $"
@@ -618,7 +624,7 @@ setMaxIterCommand
 setDeviceNumberCommand
     lda #2
     sta .DEV_NUM_BUFFER
-    +printStr .TXT_DEVICE_NUMBER
+    +printStr .TXT_DEVICE_NUMBER_INPUT
     +inputStr .DEV_NUM_BUFFER, .DIGITS
     +atoi .DEV_NUM_BUFFER, .NEW_DEV_NUM
     bne .convErrDevNum
@@ -639,6 +645,20 @@ setDeviceNumberCommand
     +printStr .ERR_OUT_OF_RANGE
     jsr printCRLF
     rts
+
+
+.FIRST_COLOR_TXT_INPUT
+!byte 10
+!tx "FIRST   : "
+.SECOND_COLOR_TXT_INPUT
+!byte 10
+!tx "SECOND  : "
+.THIRD_COLOR_TXT_INPUT
+!byte 10
+!tx "THIRD   : "
+.BKGRND_COLOR_TXT_INPUT
+!byte 10
+!tx "BACKGRND: "
 
 
 .FIRST_COLOR_TXT
@@ -666,22 +686,22 @@ setDeviceNumberCommand
 ; setColorsCommand
 ; --------------------------------------------------
 setColorsCommand
-    +printStr .FIRST_COLOR_TXT
+    +printStr .FIRST_COLOR_TXT_INPUT
     jsr getColor
     bcs .doneError
     sta .PIC_COL1
 
-    +printStr .SECOND_COLOR_TXT
+    +printStr .SECOND_COLOR_TXT_INPUT
     jsr getColor
     bcs .doneError
     sta .PIC_COL2
 
-    +printStr .THIRD_COLOR_TXT
+    +printStr .THIRD_COLOR_TXT_INPUT
     jsr getColor
     bcs .doneError
     sta .PIC_COL3
 
-    +printStr .BKGRND_COLOR_TXT
+    +printStr .BKGRND_COLOR_TXT_INPUT
     jsr getColor
     bcs .doneError
     sta .BACKGROUND_COLOR
