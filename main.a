@@ -10,7 +10,7 @@ CLOCK_50_HZ = 1
 RES_X = 320
 RES_Y = 200
 
-jmp readEvalPrintLoop
+jmp progStart
 
 !zone arith
 !source "arith16.a"

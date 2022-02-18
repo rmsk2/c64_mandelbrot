@@ -13,6 +13,35 @@ NUM_DELAY_LOOPS = 15
 NUM_DELAY_LOOPS = 250
 }
 
+progStart
+    jsr showTitleScreen
+    jmp readEvalPrintLoop
+
+
+.TITLE_LINE_1
+!byte 34
+!byte 147
+!byte $0a, $0d
+!tx "  MANDELCALC BY MARTIN GRAP"
+!byte $0a, $0d, $0a, $0d
+
+.TITLE_LINE_2
+!byte 26
+!tx "       WRITTEN IN 2022"
+!byte $0a, $0d, $0a, $0d
+
+.TITLE_LINE_3
+!byte 34
+!tx "PRESS H FOR HELP AND X TO EXIT"
+!byte $0a, $0d, $0a, $0d
+
+
+showTitleScreen
+    +printStr .TITLE_LINE_1
+    +printStr .TITLE_LINE_2
+    +printStr .TITLE_LINE_3
+    rts
+
 .COMMAND
 !byte 5
 !tx "CMD> "
