@@ -291,10 +291,6 @@ showValuesCommand
 !byte CALC_NOT_CONTINUABLE
 .SAVED_BACKGROUND_COLOR
 !byte 0
-.SAVED_COUNT_Y
-!byte 0
-.SAVED_COUNT_X
-!byte 0,0
 ; --------------------------------------------------
 ; runCalcCommand
 ; --------------------------------------------------
@@ -331,10 +327,6 @@ runCalcCommand
     jmp .endCalc
 
 .breakRequested
-    lda COUNT_Y
-    sta .SAVED_COUNT_Y
-    +move16Bit COUNT_X, .SAVED_COUNT_X
-
     lda #CALC_CONTINUABLE
     sta .CONTINUEABLE
 
@@ -367,10 +359,6 @@ continueCommand
 
     lda 53281
     sta .SAVED_BACKGROUND_COLOR
-
-    lda .SAVED_COUNT_Y
-    sta COUNT_Y
-    +move16Bit .SAVED_COUNT_X, COUNT_X
 
     jsr turnBitmapOn
     jmp .keyStillPressed
