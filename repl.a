@@ -21,20 +21,20 @@ progStart
 
 
 .TITLE_LINE_1
-!byte 34
+!byte 38
 !byte 147
 !byte $0a, $0d
-!tx "  MANDELCALC BY MARTIN GRAP"
+!tx "  MANDELCALC 0.9 BY MARTIN GRAP"
 !byte $0a, $0d, $0a, $0d
 
 .TITLE_LINE_2
-!byte 26
-!tx "       WRITTEN IN 2022"
+!byte 27
+!tx "        WRITTEN IN 2022"
 !byte $0a, $0d, $0a, $0d
 
 .TITLE_LINE_3
-!byte 34
-!tx "PRESS H FOR HELP AND X TO EXIT"
+!byte 35
+!tx " ENTER H FOR HELP AND X TO EXIT"
 !byte $0a, $0d, $0a, $0d
 
 
@@ -132,6 +132,10 @@ showTitleScreen
 !byte CMD_LEN
 !tx "CNT"
 
+.DIR_COMMAND
+!byte CMD_LEN
+!tx "DIR"
+
 
 .HELP_COMMAND
 !byte 1
@@ -170,6 +174,7 @@ showTitleScreen
 !byte <.SHOW_COLS_COMMAND, >.SHOW_COLS_COMMAND, <showColorsCommand, >showColorsCommand
 !byte <.SELECT_PIXEL_COMMAND, >.SELECT_PIXEL_COMMAND, <selectPixelCommand, >selectPixelCommand
 !byte <.CONTINUE_CALC_COMMAND, >.CONTINUE_CALC_COMMAND, <continueCommand, >continueCommand
+!byte <.DIR_COMMAND, >.DIR_COMMAND, <dirCommand, >dirCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <helpCommand, >helpCommand
 !byte 0,0,0,0 ; end marker
 
@@ -1184,12 +1189,12 @@ getElapsedTime
 ; OUTPUT: None
 ; --------------------------------------------------
 resetAndStartRTC
-    !ifdef CLOCK_50_HZ {
+!ifdef CLOCK_50_HZ {
     ; set base frequency for RTC to 50Hz 
     lda .CIA_CONTROL_REG
     ora #%10000000
     sta .CIA_CONTROL_REG
-    }
+}
     ; set rtc to 0
     lda #$00
     sta .CIA_RTC_HOURS
@@ -1210,4 +1215,10 @@ resetAndStartRTC
 stopRTC
     lda .CIA_RTC_HOURS
     sta .CIA_RTC_HOURS
+    rts
+
+
+dirCommand
+    +printStr .COMMAND_NOT_IMPLEMENTED
+    jsr printCRLF
     rts
