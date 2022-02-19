@@ -5,6 +5,8 @@ SPRITE_0_ADDRESS = SPRITE_0_BLOCK * $40
 VIC_BASE = $D000
 JOYSTICK2 = $DC00
 SPRITE_COLOR = 2
+CALC_NOT_CONTINUABLE = 1
+CALC_CONTINUABLE = 0
 
 
 !ifndef SUPER_CPU {
@@ -126,6 +128,11 @@ showTitleScreen
 !byte CMD_LEN
 !tx "GCL"
 
+.CONTINUE_CALC_COMMAND
+!byte CMD_LEN
+!tx "CNT"
+
+
 .HELP_COMMAND
 !byte 1
 !tx "H"
@@ -162,6 +169,7 @@ showTitleScreen
 !byte <.SET_COLS_COMMAND, >.SET_COLS_COMMAND, <setColorsCommand, >setColorsCommand
 !byte <.SHOW_COLS_COMMAND, >.SHOW_COLS_COMMAND, <showColorsCommand, >showColorsCommand
 !byte <.SELECT_PIXEL_COMMAND, >.SELECT_PIXEL_COMMAND, <selectPixelCommand, >selectPixelCommand
+!byte <.CONTINUE_CALC_COMMAND, >.CONTINUE_CALC_COMMAND, <continueCommand, >continueCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <helpCommand, >helpCommand
 !byte 0,0,0,0 ; end marker
 
@@ -279,23 +287,31 @@ showValuesCommand
 
     rts
 
-
+.CONTINUEABLE
+!byte CALC_NOT_CONTINUABLE
 .SAVED_BACKGROUND_COLOR
 !byte 0
+.SAVED_COUNT_Y
+!byte 0
+.SAVED_COUNT_X
+!byte 0,0
 ; --------------------------------------------------
 ; runCalcCommand
 ; --------------------------------------------------
 runCalcCommand
-.keyStillPressed
-    jsr GETIN
-    cmp #0
-    bne .keyStillPressed
-
     lda 53281
     sta .SAVED_BACKGROUND_COLOR
 
     jsr initMandel
     jsr bitMapOn
+
+.keyStillPressed
+    jsr GETIN
+    cmp #0
+    bne .keyStillPressed
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
 
     jsr resetAndStartRTC
 .loopUntilFinished
@@ -309,7 +325,20 @@ runCalcCommand
     cmp MAX_Y
     bne .loopUntilFinished
 
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+
+    jmp .endCalc
+
 .breakRequested
+    lda COUNT_Y
+    sta .SAVED_COUNT_Y
+    +move16Bit COUNT_X, .SAVED_COUNT_X
+
+    lda #CALC_CONTINUABLE
+    sta .CONTINUEABLE
+
+.endCalc
     jsr bitMapOff
     jsr getElapsedTime
     jsr stopRTC
@@ -320,6 +349,34 @@ runCalcCommand
     +printStr ELAPSED_TIME_DESC
     +printStr ELAPSED_TIME_STR
     jsr printCRLF
+    rts
+
+
+.CALC_NOT_CONTINUABLE_TXT
+!byte 34
+!tx "CALCULATION CAN NOT BE CONTINUED"
+!byte $0a,$0d
+
+; --------------------------------------------------
+; continueCommand
+; --------------------------------------------------
+continueCommand
+    lda .CONTINUEABLE
+    cmp #CALC_CONTINUABLE
+    bne .notContinuable
+
+    lda 53281
+    sta .SAVED_BACKGROUND_COLOR
+
+    lda .SAVED_COUNT_Y
+    sta COUNT_Y
+    +move16Bit .SAVED_COUNT_X, COUNT_X
+
+    jsr turnBitmapOn
+    jmp .keyStillPressed
+
+.notContinuable
+    +printStr .CALC_NOT_CONTINUABLE_TXT
     rts
 
 
@@ -359,7 +416,12 @@ loadCommand
     +printStr .LOAD_FILE_NAME
     +inputStr .FILE_NAME, .ALPHA
     lda .FILE_NAME
-    beq .emptyFileName
+    bne .fileNotEmpty
+    jmp .emptyFileName
+.fileNotEmpty
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
 
     +strCpy .PREFIX_SLOT, .RES_FILE_NAME
     +strCat .FILE_NAME, .RES_FILE_NAME
@@ -486,9 +548,13 @@ deriveFromPixelCommand
     +printStr .TXT_X_COORD
     +inputStr .INP_X_COORD, .DIGITS
     +atoi .INP_X_COORD, .CONV_RESULT_X
-    bne .convErr
+    beq .convOK
+    jmp .convErr
+.convOK
     +cmp16Bit .CONV_RESULT_X, MAX_X
-    bcs .tooLargeErr
+    bcc .sizeOK
+    jmp .tooLargeErr
+.sizeOK
     jsr printCRLF
 
     +printStr .TXT_Y_COORD
@@ -503,6 +569,10 @@ deriveFromPixelCommand
     lda .CONV_RESULT_Y
     sta COUNT_Y
     jsr deriveParametersFromPixel
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+
     jmp showValuesCommand
 .convErr
     jsr printCRLF
@@ -521,6 +591,10 @@ deriveFromPixelCommand
 ; --------------------------------------------------
 incrementZoomCommand
     jsr increaseZoomLevel
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+    
     jmp showValuesCommand
 
 
@@ -529,6 +603,10 @@ incrementZoomCommand
 ; --------------------------------------------------
 multicolorCommand
     jsr setMuticolor
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+    
     rts
 
 
@@ -537,6 +615,10 @@ multicolorCommand
 ; --------------------------------------------------
 hiresCommand
     jsr setHires
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+    
     rts
 
 
@@ -545,6 +627,10 @@ hiresCommand
 ; --------------------------------------------------
 doubleXstepCommand
     jsr doubleStepX
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+
     jmp showValuesCommand
 
 
@@ -553,6 +639,10 @@ doubleXstepCommand
 ; --------------------------------------------------
 halveXstepCommand
     jsr halveStepX
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+
     jmp showValuesCommand  
   
 
@@ -561,6 +651,10 @@ halveXstepCommand
 ; --------------------------------------------------
 resetCommand
     jsr resetParameters
+
+    lda #CALC_NOT_CONTINUABLE
+    sta .CONTINUEABLE
+
     jmp showValuesCommand
 
 
