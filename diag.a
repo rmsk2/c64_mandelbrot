@@ -179,3 +179,17 @@ testItoa
     jsr printCRLF
 
     rts
+
+.ERROR_READING_BLOCK
+!byte 21
+!tx "ERROR READING BLOCK"
+!byte $0a,$0d
+readBlockTest
+    +readBlockImmediate 18, 1
+    cmp #DISK_IO_OK
+    beq .noError
+    +printStr .ERROR_READING_BLOCK
+    jsr readAndEvalErrorChannel
+    +printStr ERR_BYTE_COUNTER
+.noError
+    rts

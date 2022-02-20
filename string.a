@@ -3,6 +3,8 @@ GETIN   = $FFE4
 CHAROUT = $FFD2
 PLOT    = $FFF0
 CHRIN   = $FFCF
+CHKOUT  = $FFC9
+CLRCHN  = $FFCC
 
 HEX_CHARS
 !tx "0123456789ABCDEF"
@@ -184,6 +186,13 @@ printString
 !macro printStrAt .posx, .posy, .addr {
     +locate .posx, .posy
     +printStr .addr
+}
+
+!macro writeStrToChannel .chan, .addr {
+    ldx #.chan
+    jsr CHKOUT                         ; use .chan as output channel
+    +printStr .addr
+    jsr CLRCHN                        
 }
 
 !macro printStrAtAddr .addrPosx, .addPosy, .addr {

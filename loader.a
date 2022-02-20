@@ -3,6 +3,12 @@
 TARGET_ADDRESS = $4500
 CHAROUT = $FFD2
 DEFAULT_DRIVE = 8
+SETNAM = $FFBD
+SETLFS = $FFBA
+OPEN = $FFC0
+LOAD = $FFD5
+CHAROUT = $FFD2
+
 
 *=$0801
 !byte $0c,$08,$e5,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
@@ -12,34 +18,46 @@ jmp main
 DEVICE_NUM_LOADER
 !byte DEFAULT_DRIVE
 
-!source "disk_io.a"
-
 ALREADY_LOADED
 !byte 0
 
 FILE_NAME
 !tx "MANDELBR"
 
+ERROR_TXT
+!tx "LOAD ERROR"
+!byte $0d,$0a
+
 main
     lda ALREADY_LOADED
     bne .startProgram
-    +loadFile FILE_NAME, 8, DEVICE_NUM_LOADER, TARGET_ADDRESS
-    bne .errLoad
+    lda #8
+    ldx #<FILE_NAME
+    ldy #>FILE_NAME
+    jsr SETNAM
+
+    lda #$01                          ; logical file number 1
+    ldx DEVICE_NUM_LOADER
+    ldy #$00                          ; secondary address 0 
+    jsr SETLFS
+
+    ; set address of receiving buffer
+    ldx #<TARGET_ADDRESS
+    ldy #>TARGET_ADDRESS
+    lda #$00                          ; do load instead of a verify
+    jsr LOAD
+    bcs .errLoad
 .startProgram
     lda #1
     sta ALREADY_LOADED
     jmp TARGET_ADDRESS
 .errLoad
     ldy #0
-.errLoop
-    lda ERROR_MSG_BUFFER,y
+.charLoop
+    lda ERROR_TXT,y
     jsr CHAROUT
     iny
-    cpy ERR_BYTE_COUNTER
-    bne .errLoop
-    lda #10
-    jsr CHAROUT
-    lda #13
-    jsr CHAROUT
+    cpy #12
+    bne .charLoop
     rts
 

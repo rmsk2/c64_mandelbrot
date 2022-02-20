@@ -292,6 +292,11 @@ showValuesCommand
 
     rts
 
+
+.CALC_INTERRUPTED_TXT
+!byte 23
+!tx "CALCULATION INTERRUPTED"
+
 .CONTINUEABLE
 !byte CALC_NOT_CONTINUABLE
 .SAVED_BACKGROUND_COLOR
@@ -345,6 +350,12 @@ runCalcCommand
 
     +printStr ELAPSED_TIME_DESC
     +printStr ELAPSED_TIME_STR
+    lda .CONTINUEABLE
+    cmp #CALC_CONTINUABLE
+    bne .noMessage
+    jsr printCRLF
+    +printStr .CALC_INTERRUPTED_TXT
+.noMessage
     jsr printCRLF
     rts
 
