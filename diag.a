@@ -147,3 +147,35 @@ testCat
     lda #34
     jsr CHAROUT
     rts
+
+.TEST_CONV_DATA
+!byte 0
+.TEST_OUT
+!byte 0
+!tx "xxx"
+testItoa
+    lda #0 
+    sta .TEST_CONV_DATA
+    +itoa .TEST_CONV_DATA, .TEST_OUT
+    +printStr .TEST_OUT
+    jsr printCRLF
+
+    lda #255 
+    sta .TEST_CONV_DATA
+    +itoa .TEST_CONV_DATA, .TEST_OUT
+    +printStr .TEST_OUT
+    jsr printCRLF
+
+    lda #5 
+    sta .TEST_CONV_DATA
+    +itoa .TEST_CONV_DATA, .TEST_OUT
+    +printStr .TEST_OUT
+    jsr printCRLF
+
+    lda #99 
+    sta .TEST_CONV_DATA
+    +itoa .TEST_CONV_DATA, .TEST_OUT
+    +printStr .TEST_OUT
+    jsr printCRLF
+
+    rts
