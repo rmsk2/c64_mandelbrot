@@ -180,16 +180,26 @@ testItoa
 
     rts
 
-.ERROR_READING_BLOCK
-!byte 21
-!tx "ERROR READING BLOCK"
-!byte $0a,$0d
+.OUT_COUNT
+!byte 0
 readBlockTest
     +readBlockImmediate 18, 1
     cmp #DISK_IO_OK
-    beq .noError
-    +printStr .ERROR_READING_BLOCK
-    jsr readAndEvalErrorChannel
+    beq .blockHexDump
     +printStr ERR_BYTE_COUNTER
-.noError
+    rts
+.blockHexDump
+    ldy #0
+    sty .OUT_COUNT
+.printNextByte
+    lda .OUT_COUNT
+    and #$0F
+    bne .noCrLf
+    jsr printCRLF
+.noCrLf
+    ldy .OUT_COUNT
+    lda BLOCK_BUFFER, y
+    jsr printByte
+    inc .OUT_COUNT
+    bne .printNextByte
     rts

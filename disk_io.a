@@ -242,20 +242,46 @@ readBlockCall
     jsr CLOSE
     JSR CLRCHN
     lda .READ_BLOCK_ERR_TEMP
+    sta DISK_ERROR
     rts
 .errorOpenDataChannel
     lda #5
     jsr CLOSE               ; close already opened command channel
 .errorOpenCommandChannel
     lda #DISK_IO_ERR
+    sta DISK_ERROR
     rts
 
+; --------------------------------------------------
+; This routine reads the block identified by track in X register and
+; sector in y register into the buffer BLOCK_BUFFER.
+; 
+; This routine returns DISK_IO_OK in accu if everything went OK.
+; --------------------------------------------------
+readBlockWithErrorChannel
+    jsr readBlockCall
+    lda DISK_ERROR
+    cmp #DISK_IO_OK
+    bne .readErrorChannel
+    rts
+.readErrorChannel
+    jsr readAndEvalErrorChannel
+    lda DISK_ERROR
+    rts
 
 !macro readBlockImmediate .track, .sector {
     ldx #.track
     ldy #.sector
-    jsr readBlockCall
+    jsr readBlockWithErrorChannel
 }
+
+
+!macro readBlock .addrTrack, .addrSector {
+    ldx .addrTrack
+    ldy .addrSector
+    jsr readBlockWithErrorChannel
+}
+
 
 BLOCK_COUNTER
 !byte 0,0
