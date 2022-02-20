@@ -1,5 +1,5 @@
 !to "mandelbr", cbm
-INCLUDE_DIAG = 1
+;INCLUDE_DIAG = 1
 FAST_MUL = 1
 ;SUPER_CPU = 1
 CLOCK_50_HZ = 1
