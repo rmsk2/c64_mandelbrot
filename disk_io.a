@@ -204,10 +204,12 @@ BLOCK_BUFFER
 readBlockCall
     stx .TEMP_TRACK
     sty .TEMP_SECTOR
+    ; OPEN 5,8,15
     +openChannelNoFileName 5, DEVICE_NUM, 15
     bcc .openCommandChannelOK
     jmp .errorOpenCommandChannel
 .openCommandChannelOK
+    ; OPEN 4,8,3,"#"
     +openChannel 4, DEVICE_NUM, 3, .FILE_NAME_ANY_FREE_BUFFER
     bcc .openDataChannelOk
     jmp .errorOpenDataChannel
@@ -215,14 +217,10 @@ readBlockCall
     ; PRINT#5,"U1:";3;0;track;sector
     lda #0
     sta .CMD_BUFFER
-    lda #0
-    sta .CMD_HELP
     +strCpy .CMD_BUFFER_READ, .CMD_BUFFER
     +itoa .TEMP_TRACK, .CMD_HELP
     +strCat .CMD_HELP, .CMD_BUFFER
     +strCat .ONE_SPACE, .CMD_BUFFER
-    lda #0
-    sta .CMD_HELP
     +itoa .TEMP_SECTOR, .CMD_HELP
     +strCat .CMD_HELP, .CMD_BUFFER
     +strCat .CRLF_TXT, .CMD_BUFFER

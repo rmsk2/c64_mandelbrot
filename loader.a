@@ -2,15 +2,23 @@
 
 TARGET_ADDRESS = $4500
 CHAROUT = $FFD2
-DEFAULT_DRIVE = 8
 SETNAM = $FFBD
 SETLFS = $FFBA
 OPEN = $FFC0
 LOAD = $FFD5
 CHAROUT = $FFD2
+CHKIN = $FFC6
+CLOSE = $FFC3
+CLRCHN = $FFCC
+CHRIN = $FFCF
+READST = $FFB7
+
+DEFAULT_DRIVE = 8
+FILE_NUM = 15
 
 
 *=$0801
+;2021 SYS 2062
 !byte $0c,$08,$e5,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
 
 jmp main
@@ -21,43 +29,122 @@ DEVICE_NUM_LOADER
 ALREADY_LOADED
 !byte 0
 
+FILE_NAME_LEN
+!byte 8
 FILE_NAME
 !tx "MANDELBR"
 
-ERROR_TXT
+LOAD_ERR_LENGTH
+!byte 12
+LOAD_ERROR_TXT
 !tx "LOAD ERROR"
 !byte $0d,$0a
 
+; --------------------------------------------------
+; Main routine, called by SYS 2062 from BASIC. It loads the program
+; and then jmps to its TARGET_ADDRESS.
+; --------------------------------------------------
 main
     lda ALREADY_LOADED
     bne .startProgram
-    lda #8
-    ldx #<FILE_NAME
-    ldy #>FILE_NAME
-    jsr SETNAM
-
-    lda #$01                          ; logical file number 1
-    ldx DEVICE_NUM_LOADER
-    ldy #$00                          ; secondary address 0 
-    jsr SETLFS
-
-    ; set address of receiving buffer
-    ldx #<TARGET_ADDRESS
-    ldy #>TARGET_ADDRESS
-    lda #$00                          ; do load instead of a verify
-    jsr LOAD
+    jsr loadPayload
     bcs .errLoad
 .startProgram
     lda #1
     sta ALREADY_LOADED
     jmp TARGET_ADDRESS
 .errLoad
-    ldy #0
-.charLoop
-    lda ERROR_TXT,y
-    jsr CHAROUT
-    iny
-    cpy #12
-    bne .charLoop
+    jsr openErrorChannel
+    bcc .errChanOpened
+    jmp genericLoadError
+.errChanOpened
+    jsr drainAndPrintErrorChannel
     rts
 
+
+; --------------------------------------------------
+; This routine loads the payload to the correct address (TARGET_ADDRESS)
+; The file name used for that is stored at the address FILE_NAME. The device
+; to use is loaded from address DEVICE_NUM_LOADER.
+; --------------------------------------------------
+loadPayload
+    lda FILE_NAME_LEN
+    ldx #<FILE_NAME
+    ldy #>FILE_NAME
+    jsr SETNAM
+
+    lda #$01                                   ; logical file number 1
+    ldx DEVICE_NUM_LOADER
+    ldy #$00                                   ; secondary address 0 
+    jsr SETLFS
+
+    ; set address of receiving buffer
+    ldx #<TARGET_ADDRESS
+    ldy #>TARGET_ADDRESS
+    lda #$00                                   ; do load instead of a verify
+    jsr LOAD
+    rts
+
+
+; --------------------------------------------------
+; This routine opens the error channel for the disk drive 
+; DEVICE_NUM_LOADER. It essentially performs 
+; OPEN FILE_NUM, DEVICE_NUM_LOADER, 15
+; --------------------------------------------------
+openErrorChannel
+    lda #0                                     ; no file name
+    ldx #0
+    ldy #0
+    jsr SETNAM
+
+    lda #FILE_NUM                              ; logical file number 15
+    ldx DEVICE_NUM_LOADER                      ; device number
+    ldy #15                                    ; secondary address 15
+    jsr SETLFS
+
+    jsr OPEN                                   ; open channel
+    php
+    bcs .errorOpen
+    plp
+    rts
+.errorOpen
+    lda #FILE_NUM                           
+    jsr CLOSE                                  ; close file even if open failed
+    plp                                        ; restore status register, carry is set if an error occured
+    rts
+
+
+; --------------------------------------------------
+; This routine reads all available data fron the file FILE_NUM, i.e. here the
+; previosuly opened error channel. After draining it, the file is closed and
+; the default input and output channels are restored.
+; --------------------------------------------------
+drainAndPrintErrorChannel
+    ldx #FILE_NUM
+    jsr CHKIN                                  ; use file 15 as input
+.loopErrorChannel
+    jsr READST                                 ; read status word
+    bne .close                                 ; test for eof/error
+    jsr CHRIN                                  ; read character from error channel
+    jsr CHAROUT
+    jmp .loopErrorChannel                      ; read next byte
+.close 
+    lda #FILE_NUM                           
+    jsr CLOSE                                  ; close file 15
+    jsr CLRCHN
+    rts
+
+
+; --------------------------------------------------
+; This routine prints a generice error message in case the LOAD failed
+; and the error channel could not be opened.
+; --------------------------------------------------
+genericLoadError
+    ldx #0
+.nextMsgChar
+    lda LOAD_ERROR_TXT,x
+    jsr CHAROUT
+    inx
+    cpx LOAD_ERR_LENGTH
+    bne .nextMsgChar
+    rts         
