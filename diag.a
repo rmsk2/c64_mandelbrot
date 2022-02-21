@@ -180,15 +180,66 @@ testItoa
 
     rts
 
-.OUT_COUNT
-!byte 0
+
+.TRACK_TXT
+!byte 7
+!tx "TRACK: "
+
+.SECTOR_TXT
+!byte 8
+!tx "SECTOR: "
+
+.INPUT_TRACK
+!byte 2
+!byte 0,0
+
+.INPUT_SECTOR
+!byte 2
+!byte 0,0
+
+.TRACK
+!byte 0,0
+.SECTOR
+!byte 0,0
+
 readBlockTest
-    +readBlockImmediate 18, 1
+    +printStr .TRACK_TXT
+    lda #2
+    sta .INPUT_TRACK
+    +inputStr .INPUT_TRACK, .DIGITS
+    jsr printCRLF
+    lda .INPUT_TRACK
+    beq .convErrorBlockTest
+    +atoi .INPUT_TRACK, .TRACK
+    bne .convErrorBlockTest
+
+    +printStr .SECTOR_TXT
+    lda #2
+    sta .INPUT_SECTOR
+    +inputStr .INPUT_SECTOR, .DIGITS
+    jsr printCRLF
+    lda .INPUT_SECTOR
+    beq .convErrorBlockTest
+    +atoi .INPUT_SECTOR, .SECTOR
+    bne .convErrorBlockTest
+
+    +readBlock .TRACK, .SECTOR
     cmp #DISK_IO_OK
-    beq .blockHexDump
+    bne .printErrReadBlock
+    jsr blockHexDump
+    jsr printCRLF
+    jsr printCRLF
+    jmp readBlockTest
+.convErrorBlockTest
+    rts
+.printErrReadBlock
     +printStr ERR_BYTE_COUNTER
     rts
-.blockHexDump
+
+
+.OUT_COUNT
+!byte 0
+blockHexDump
     ldy #0
     sty .OUT_COUNT
 .printNextByte
