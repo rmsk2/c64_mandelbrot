@@ -1,5 +1,5 @@
 !to "mandelbr", cbm
-INCLUDE_DIAG = 1
+;INCLUDE_DIAG = 1
 FAST_MUL = 1
 ;SUPER_CPU = 1
 CLOCK_50_HZ = 1
@@ -20,6 +20,9 @@ jmp progStart
 
 !zone hires
 !source "hires.a"
+
+!zone diskio
+!source "disk_io.a"
 
 !zone repl
 !source "repl.a"
@@ -194,9 +197,6 @@ DEFAULT_INIT_REAL
 DEFAULT_INIT_IMAG
 !byte 0, 0, 0, 0, 1
 ; **************************************************
-
-!zone diskio
-!source "disk_io.a"
 
 !ifdef INCLUDE_DIAG {
 !zone diag
