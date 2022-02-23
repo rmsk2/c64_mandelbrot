@@ -1361,8 +1361,8 @@ printDirectoryEntries
     rts
 
 .TXT_FREE_BLOCKS
-!byte 13
-!tx "FREE BLOCKS: "
+!byte 14
+!tx "FREE BLOCKS: $"
 .NEXT_TRACK
 !byte 0
 .NEXT_SECTOR
