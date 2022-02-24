@@ -1324,15 +1324,15 @@ printDirectoryEntries
 .continuePrintEntry    
     +load16BitImmediate BLOCK_BUFFER, .ENTRY_ADDRESS
     +add16Bit .CURRENT_OFFSET, .ENTRY_ADDRESS
-    ; look at file type    
+    ; determine file type    
     +move16Bit .ENTRY_ADDRESS, TEMP_PTR
     ldy #0
     lda (TEMP_PTR), y
     and #%00000111                                             ; file type is in the lower three bits
-    beq .deletedEntry
+    beq .deletedEntry                                          ; file type = 0 => deleted entry
     tay
     dey
-    sty .FILE_TYPE                                             ; file type = 0 => deleted entry
+    sty .FILE_TYPE                                             ; store determined file type                                         
     ; print file name
     +printStr .SPACER
     +inc16Bit .ENTRY_ADDRESS
@@ -1413,10 +1413,12 @@ dirCommand
     cmp #DISK_IO_OK
     bne .printDiskError
 
+    ; print entries contained in currently loaded sector
     jsr printDirectoryEntries
     jmp .loopDirectoryBlocks
 
 .dirFinish
+    ; print number of freee blocks
     +printStr .TXT_FREE_BLOCKS
     lda .FREE_BLOCKS+1
     jsr printByte
