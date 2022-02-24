@@ -1385,6 +1385,7 @@ dirCommand
     +printOffset BLOCK_BUFFER+144, 16
     jsr printCRLF
 
+    ; calculate number of free blocks on disk
     ldy #4
 .addNextBlocks
     lda BLOCK_BUFFER, y
