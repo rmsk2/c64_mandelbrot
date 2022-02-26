@@ -254,3 +254,32 @@ blockHexDump
     inc .OUT_COUNT
     bne .printNextByte
     rts
+
+
+testMorse
+    jsr morseEnde
+    jsr morsePauseWord
+    jsr morseEnde
+    jsr morsePauseWord
+    jsr morseEnde
+    rts
+
+morseEnde
+    jsr morseDit                                   ; E
+
+    jsr morsePause
+
+    jsr morseDah                                   ; N
+    jsr morseDit
+
+    jsr morsePause
+
+    jsr morseDah                                   ; D
+    jsr morseDit
+    jsr morseDit
+
+    jsr morsePause                                 ; E
+
+    jsr morseDit
+
+    rts

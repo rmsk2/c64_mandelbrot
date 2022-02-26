@@ -142,6 +142,12 @@ showTitleScreen
 !tx "H"
 
 
+!ifdef INCLUDE_DIAG {
+.TEST_COMMAND
+!byte 1
+!tx "T"
+}
+
 .COMMAND_NOT_RECOGNIZED
 !byte 22
 !tx "COMMAND NOT RECOGNIZED"
@@ -176,6 +182,9 @@ showTitleScreen
 !byte <.CONTINUE_CALC_COMMAND, >.CONTINUE_CALC_COMMAND, <continueCommand, >continueCommand
 !byte <.DIR_COMMAND, >.DIR_COMMAND, <dirCommand, >dirCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <helpCommand, >helpCommand
+!ifdef INCLUDE_DIAG {
+!byte <.TEST_COMMAND, >.TEST_COMMAND, <testMorse, >testMorse    
+}
 !byte 0,0,0,0 ; end marker
 
 
@@ -355,7 +364,10 @@ runCalcCommand
     bne .noMessage
     jsr printCRLF
     +printStr .CALC_INTERRUPTED_TXT
+    jsr printCRLF
+    rts
 .noMessage
+    jsr finishedSoundSignal
     jsr printCRLF
     rts
 
@@ -1430,4 +1442,38 @@ dirCommand
     +printStr .IO_ERROR_TXT
     +printStr ERR_BYTE_COUNTER
     jsr printCRLF
+    rts
+
+; --------------------------------------------------
+; finishedSoundSignal This routine beeps ENDE ENDE ENDE in Morse code
+; --------------------------------------------------
+finishedSoundSignal
+    jsr morseEnde
+    jsr morsePauseWord
+    jsr morseEnde
+    jsr morsePauseWord
+    jsr morseEnde
+    rts
+
+; --------------------------------------------------
+; morseEnde This routine beeps ENDE in Morse code
+; --------------------------------------------------
+morseEnde
+    jsr morseDit                                   ; E
+
+    jsr morsePause
+
+    jsr morseDah                                   ; N
+    jsr morseDit
+
+    jsr morsePause
+
+    jsr morseDah                                   ; D
+    jsr morseDit
+    jsr morseDit
+
+    jsr morsePause                                 ; E
+
+    jsr morseDit
+
     rts

@@ -90,11 +90,51 @@ NOISE = 128
 ; --------------------------------------------------
 beepOn
     +setGlobalVolume 15
-    +setBeepADSR 2, 2, 1, 0, 1                 ; time attack: 2, time decay: 2, volume sustain 1, time release 0, voice 1
-    +setFrequency $14B4, 1                     ; frequency $14B4
+    +setBeepADSR 2, 2, 14, 0, 1                 ; time attack: 2, time decay: 2, volume sustain 14, time release 0, voice 1
+    +setFrequency $2000, 1                     ; frequency $2000
     +turnWaveOn SAWTOOTH, 1                    ; set SAWTOOTH and turn key bit on
     rts
 
+pauseDit
+    ldx #92
+    ldy #0
+.count256
+    iny
+    bne .count256
+    dex
+    bne .count256
+    rts    
+
+morseDit
+    jsr beepOn
+    jsr pauseDit
+    jsr beepOff
+    jsr pauseDit
+    rts
+
+morsePause
+    jsr pauseDit
+    jsr pauseDit
+    rts    
+
+morsePauseWord
+    jsr pauseDit
+    jsr pauseDit
+    jsr pauseDit
+    jsr pauseDit
+    jsr pauseDit
+    jsr pauseDit        
+    rts    
+
+
+morseDah
+    jsr beepOn
+    jsr pauseDit
+    jsr pauseDit
+    jsr pauseDit
+    jsr beepOff
+    jsr pauseDit    
+    rts
 
 ; --------------------------------------------------
 ; beepOff turns off sound
