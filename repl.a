@@ -1472,8 +1472,8 @@ morseEnde
     jsr morseDit
     jsr morseDit
 
-    jsr morsePause                                 ; E
+    jsr morsePause                                 
 
-    jsr morseDit
+    jsr morseDit                                   ; E
 
     rts
