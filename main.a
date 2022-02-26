@@ -24,6 +24,9 @@ jmp progStart
 !zone diskio
 !source "disk_io.a"
 
+!zone beep
+!source "beep.a"
+
 !zone repl
 !source "repl.a"
 

@@ -23,7 +23,7 @@ clean:
 loader: loader.a
 	$(ACME) -l loader.txt loader.a
 
-mandelbr: main.a arith16.a  hires.a diag.a disk_io.a string.a repl.a
+mandelbr: main.a arith16.a  hires.a diag.a disk_io.a string.a repl.a beep.a
 	$(ACME) -l mandelbr.txt main.a
 
 mandelbr.d64: loader mandelbr
