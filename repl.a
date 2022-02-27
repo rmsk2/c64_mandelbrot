@@ -217,10 +217,7 @@ readEvalPrintLoop
 ; processCommand
 ; --------------------------------------------------
 processCommand
-    lda #<.CMD_BUFFER
-    sta TEMP_PTR2
-    lda #>.CMD_BUFFER
-    sta TEMP_PTR2+1
+    +load16BitImmediate .CMD_BUFFER, TEMP_PTR2
 
     ldx #0
     stx .CMD_COUNTER
@@ -554,13 +551,16 @@ showCommand
 .TWO_HUNDRED
 !byte 200,0
 ; --------------------------------------------------
-; deriveFromPixelCommand
+; deriveFromPixelCommand determines a new start value for a calculation in the complex plane
+; by determining the actual coordinates in the complex plane which a pixel represents. 
 ; --------------------------------------------------
 deriveFromPixelCommand
+    ; set length of input buffers
     lda #3
     sta .INP_X_COORD
     sta .INP_Y_COORD
 
+    ; read x coordinate of pixel and store it in .CONV_RESULT_X
     +printStr .TXT_X_COORD
     +inputStr .INP_X_COORD, .DIGITS
     +atoi .INP_X_COORD, .CONV_RESULT_X
@@ -573,6 +573,7 @@ deriveFromPixelCommand
 .sizeOK
     jsr printCRLF
 
+    ; read y coordinate of pixel and store it in .CONV_RESULT_Y
     +printStr .TXT_Y_COORD
     +inputStr .INP_Y_COORD, .DIGITS
     +atoi .INP_Y_COORD, .CONV_RESULT_Y
@@ -581,11 +582,15 @@ deriveFromPixelCommand
     bcs .tooLargeErr
     jsr printCRLF
 
+    ; call the subroutine that determines the complex value the pixel
+    ; represents
     +move16Bit .CONV_RESULT_X, COUNT_X
     lda .CONV_RESULT_Y
     sta COUNT_Y
     jsr deriveParametersFromPixel
 
+    ; the values for calculation have changed => we can't continue an 
+    ; interrupted calculation
     lda #CALC_NOT_CONTINUABLE
     sta .CONTINUEABLE
 
@@ -691,18 +696,20 @@ resetCommand
 ; setMaxIterCommand
 ; --------------------------------------------------
 setMaxIterCommand
+    ; set size of input buffer
     lda #3
     sta .INP_ITER
 
+    ; read new maximum number of iterations and store it in .CONV_RESULT_ITER
     +printStr .TXT_MAX_ITER_INPUT
     +inputStr .INP_ITER, .DIGITS
     +atoi .INP_ITER, .CONV_RESULT_ITER
     bne .convErrIter
     +cmp16Bit .CONV_RESULT_ITER, .MAX_ITER_CMP
-    bcs .tooLargeErrIter
+    bcs .tooLargeErrIter                          ; iter can not be bigger that 254
     jsr printCRLF
     lda .CONV_RESULT_ITER
-    sta MAX_ITER
+    sta MAX_ITER                                  ; store new value for maximum iteration depth
     jmp showValuesCommand
 .convErrIter
     jsr printCRLF
@@ -732,16 +739,18 @@ setMaxIterCommand
 ; setDeviceNumberCommand
 ; --------------------------------------------------
 setDeviceNumberCommand
+    ; set size of input buffer
     lda #2
     sta .DEV_NUM_BUFFER
+    ; read new device number and store it in .NEW_DEV_NUM
     +printStr .TXT_DEVICE_NUMBER_INPUT
     +inputStr .DEV_NUM_BUFFER, .DIGITS
     +atoi .DEV_NUM_BUFFER, .NEW_DEV_NUM
     bne .convErrDevNum
     lda .NEW_DEV_NUM
-    cmp #12
-    bcs .tooLargeErrDevNum
-    sta DEVICE_NUM
+    cmp #12                                      ; ToDo: Check device number is >= 8
+    bcs .tooLargeErrDevNum                       ; allowed device numbers are 8-11
+    sta DEVICE_NUM                               ; store new device number
     jsr printCRLF
     jmp showValuesCommand
 
