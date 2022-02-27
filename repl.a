@@ -24,7 +24,7 @@ progStart
 !byte 38
 !byte 147
 !byte $0a, $0d
-!tx "  MANDELCALC 0.9 BY MARTIN GRAP"
+!tx "  MANDELCALC 1.0 BY MARTIN GRAP"
 !byte $0a, $0d, $0a, $0d
 
 .TITLE_LINE_2
@@ -1347,9 +1347,7 @@ printDirectoryEntries
     sty .FILE_TYPE                                             ; store determined file type                                         
     ; print file name
     +printStr .SPACER
-    +inc16Bit .ENTRY_ADDRESS
-    +inc16Bit .ENTRY_ADDRESS
-    +inc16Bit .ENTRY_ADDRESS
+    +add16BitImmediate 3, .ENTRY_ADDRESS
     +printOffsetMem .ENTRY_ADDRESS, 16                         ; print file name
     lda #32
     jsr CHAROUT

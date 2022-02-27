@@ -102,6 +102,23 @@ ARITH_SCRATCH10 = $9F
 }
 
 ; --------------------------------------------------
+; add16BitImmediate implements a 16 bit add of an immediate value to value stored at memAddr2 
+; The result is stored in .memAddr2
+; --------------------------------------------------
+!macro add16BitImmediate .value, .memAddr2 {
+    clc
+    ; add lo bytes
+    lda #<.value
+    adc .memAddr2
+    sta .memAddr2
+    ; add hi bytes
+    lda #>.value
+    adc .memAddr2+1
+    sta .memAddr2+1
+}
+
+
+; --------------------------------------------------
 ; inc16Bit implements a 16 bit increment of the 16 bit value stored at .memAddr 
 ; --------------------------------------------------
 !macro inc16Bit .memAddr {

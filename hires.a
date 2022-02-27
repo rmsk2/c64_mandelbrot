@@ -198,6 +198,7 @@ PLOT_COL
 ; 
 ; PLOT_POS_X            has to contain the x position of the point
 ; PLOT_POS_Y            has to contain the y position of the point
+; PLOT_COL              has to contain the number of the color (0-3)
 ; --------------------------------------------------
 setPointMulticolor
     lda #0
@@ -216,19 +217,25 @@ setPointMulticolor
 .skipPixelTwo
     rts
 
-; source: https://www.retro-programming.de/programming/nachschlagewerk/vic-ii/vic-ii-grafikmodes-bitmap-hi-res/
+; prevent Assembling buggy JMP($xxff) instruction in repl.a and main.a
+;
+; The original 6502 processor has a bug: When executing an indirect
+; JMP instruction where the low byte of the argument equals $ff, it
+; fetches the high byte of the jump target address not from memory
+; location ARGUMENT+1, but from ARGUMENT-255. Therefore ACME issues
+; this warning if you are about to generate such an instruction.
+!skip 4
+
 ; --------------------------------------------------
 ; This routine sets a point in the hires bitmap. 
+; source: https://www.retro-programming.de/programming/nachschlagewerk/vic-ii/vic-ii-grafikmodes-bitmap-hi-res/
 ; 
 ; PLOT_POS_X            has to contain the x position of the point
 ; PLOT_POS_Y            has to contain the y position of the point
 ; --------------------------------------------------
 setPoint
-    lda #<BITMAP                 ;Bitmap-Adresse auf die Zero-Page
-    sta ZP_HELPADR1
-    lda #>BITMAP
-    sta ZP_HELPADR1+1
-
+    ;Bitmap-Adresse auf die Zero-Page
+    +load16BitImmediate BITMAP, ZP_HELPADR1
     ldy PLOT_POS_Y
     ldx PLOT_POS_X
     lda PLOT_POS_X+1
@@ -253,13 +260,8 @@ setPoint
     beq .skip2
     tay
 .loop
-    clc                                ;Für jede 'Textzeile' 320 Bytes addieren
-    lda ZP_HELPADR1
-    adc #64
-    sta ZP_HELPADR1
-    lda ZP_HELPADR1+1
-    adc #1
-    sta ZP_HELPADR1+1
+    ;Für jede 'Textzeile' 320 Bytes addieren
+    +add16BitImmediate 320, ZP_HELPADR1
     dey
     bne .loop
 .skip2
