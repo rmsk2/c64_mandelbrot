@@ -747,9 +747,11 @@ setDeviceNumberCommand
     +inputStr .DEV_NUM_BUFFER, .DIGITS
     +atoi .DEV_NUM_BUFFER, .NEW_DEV_NUM
     bne .convErrDevNum
-    lda .NEW_DEV_NUM
-    cmp #12                                      ; ToDo: Check device number is >= 8
-    bcs .tooLargeErrDevNum                       ; allowed device numbers are 8-11
+    lda .NEW_DEV_NUM                             ; allowed device numbers are 8-11
+    cmp #12                                      
+    bcs .errOutOfRangeDevNum                     ; device number is >= 12 => Error out of range
+    cmp #8                      
+    bcc .errOutOfRangeDevNum                     ; device number < 8 => Error out of range
     sta DEVICE_NUM                               ; store new device number
     jsr printCRLF
     jmp showValuesCommand
@@ -759,7 +761,7 @@ setDeviceNumberCommand
     +printStr .ERR_NO_CONVERT
     jsr printCRLF
     rts
-.tooLargeErrDevNum
+.errOutOfRangeDevNum
     jsr printCRLF
     +printStr .ERR_OUT_OF_RANGE
     jsr printCRLF
@@ -1437,7 +1439,7 @@ dirCommand
     jmp .loopDirectoryBlocks
 
 .dirFinish
-    ; print number of freee blocks
+    ; print number of free blocks
     +printStr .TXT_FREE_BLOCKS
     lda .FREE_BLOCKS+1
     jsr printByte
