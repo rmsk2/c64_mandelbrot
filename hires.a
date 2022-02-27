@@ -163,7 +163,7 @@ memsetCall
 }
 
 ; --------------------------------------------------
-; This routine copies a number of 256 byte block between two addresses. The two memory
+; This routine copies a number of 256 byte blocks between two addresses. The two memory
 ; areas must not overlap
 ; 
 ; ADDR_POINTER          has to contain the start address of the source memory area
