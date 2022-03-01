@@ -37,11 +37,17 @@ progStart
 !tx " ENTER H FOR HELP AND X TO EXIT"
 !byte $0a, $0d, $0a, $0d
 
+.TITLE_LINE_4
+!byte 37
+!tx "USE DSC TO GET HELP FOR A COMMAND"
+!byte $0a, $0d, $0a, $0d
+
 
 showTitleScreen
     +printStr .TITLE_LINE_1
     +printStr .TITLE_LINE_2
     +printStr .TITLE_LINE_3
+    +printStr .TITLE_LINE_4
     rts
 
 .COMMAND
@@ -148,6 +154,10 @@ showTitleScreen
 !tx "T"
 }
 
+.DESCRIBE_COMMAND
+!byte CMD_LEN
+!tx "DSC"
+
 .COMMAND_NOT_RECOGNIZED
 !byte 22
 !tx "COMMAND NOT RECOGNIZED"
@@ -181,6 +191,7 @@ showTitleScreen
 !byte <.SELECT_PIXEL_COMMAND, >.SELECT_PIXEL_COMMAND, <selectPixelCommand, >selectPixelCommand
 !byte <.CONTINUE_CALC_COMMAND, >.CONTINUE_CALC_COMMAND, <continueCommand, >continueCommand
 !byte <.DIR_COMMAND, >.DIR_COMMAND, <dirCommand, >dirCommand
+!byte <.DESCRIBE_COMMAND, >.DESCRIBE_COMMAND, <describeCommand, >describeCommand
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <helpCommand, >helpCommand
 !ifdef INCLUDE_DIAG {
 !byte <.TEST_COMMAND, >.TEST_COMMAND, <testMorse, >testMorse    
@@ -1485,4 +1496,85 @@ morseEnde
 
     jsr morseDit                                   ; E
 
+    rts
+
+
+.VAL_HELP_TEXT
+!byte 52
+!tx "PRINT THE CURRENT VALUES RELEVANT FOR"
+!byte $0d,$0a
+!tx "CALCULATION"
+!byte $0d,$0a
+
+.RUN_HELP_TEXT
+!byte 19
+!tx "START CALCULATION"
+!byte $0d,$0a
+
+.LOD_HELP_TEXT
+!byte 30
+!tx "LOAD A FILE FROM FLOPPY DISC"
+!byte $0d,$0a
+
+.SAV_HELP_TEXT
+!byte 28
+!tx "SAVE A FILE TO FLOPPY DISC"
+!byte $0d,$0a
+
+
+.HLP_TABLE 
+!byte <.VAL_COMMAND, >.VAL_COMMAND, <.VAL_HELP_TEXT, >.VAL_HELP_TEXT
+!byte <.RUN_COMMAND, >.RUN_COMMAND, <.RUN_HELP_TEXT, >.RUN_HELP_TEXT
+!byte <.LOAD_COMMAND, >.LOAD_COMMAND, <.LOD_HELP_TEXT, >.LOD_HELP_TEXT
+!byte <.SAVE_COMMAND, >.SAVE_COMMAND, <.SAV_HELP_TEXT, >.SAV_HELP_TEXT
+!byte 0,0,0,0 ; end marker
+
+
+.TXT_DESCRIBE_INPUT
+!byte 21
+!tx "COMMAND TO DESCRIBE: "
+
+.DESC_CMD_BUFFER
+!byte 3
+!byte 0,0,0
+
+describeCommand
+    lda #3
+    sta .DESC_CMD_BUFFER
+    ; read the command to describe
+    +printStr .TXT_DESCRIBE_INPUT
+    +inputStr .DESC_CMD_BUFFER, .CMD_CHARS
+
+    ldx #0
+.commandLoop2
+    lda .HLP_TABLE,x
+    sta TEMP_PTR
+    inx
+    lda .HLP_TABLE,x
+    sta TEMP_PTR+1
+    +cmp16Bit .NO_COMMAND, TEMP_PTR
+    beq .cmdNotFound
+    +load16BitImmediate .DESC_CMD_BUFFER, TEMP_PTR2
+    jsr strCmp
+    beq .printHelpTxt
+    inx
+    inx
+    inx
+    jmp .commandLoop2 
+
+.printHelpTxt
+    inx 
+    lda .HLP_TABLE,x
+    sta TEMP_PTR
+    inx
+    lda .HLP_TABLE,x
+    sta TEMP_PTR+1
+    jsr printCRLF
+    jsr printString
+    rts
+
+.cmdNotFound
+    jsr printCRLF
+    +printStr .COMMAND_NOT_RECOGNIZED
+    jsr printCRLF
     rts
