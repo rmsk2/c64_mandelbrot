@@ -24,7 +24,7 @@ interface and offers the following commands:
 |`DEV` | Allows to set the device number used for load and save to a value between 8 and 11. |
 |`SCL` | This allows to set the four colours which are used for colouring the picture. |
 |`GCL` | Displays the four colours which are used for colouring the picture. |
-|`SXL` | As `PXL` this allows to change the upper left corner used for the next calculation. In contrast to `PXL` this command allows to select the pixel via a crosshair controlled by the joystick in port 2. |
+|`SXL` | As `PXL` this allows to change the upper left corner used for the next calculation. In contrast to `PXL` this command allows to select the pixel via a crosshair sprite controlled by the joystick in port 2. |
 |`CNT` | Resumes an interrupted calculation. |
 |`DIR` | Shows the directory of the floppy disc currently inserted in the selected drive. |
 |`DSC` | Displays a help message for the selected command. |
