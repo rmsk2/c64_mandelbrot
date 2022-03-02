@@ -15,4 +15,4 @@ interface and offers the following commands:
 |`SHO` | Shows the current picture using the selected graphics mode. Press any key to return to the CLI. |
 |`PXL` | Allows to enter the coordinates of a pixel, that serves as the new upper left corner to be used during the next calculation. |
 |`INZ` | Increases the zoom level by halving the stepping width in X and Y direction. |
-
+|`MCL` | Switch to multicolour mode. As this mode only has half of the resolution in X direction, you may have to use the `DBX` command to double the stepping width in X direction in order to preserve the aspect ratio of the picture. |
