@@ -8,7 +8,7 @@ interface and offers the following commands:
 
 | Command | Comment |
 |-|-|
-|`VAL` | Displays all values which are relevant for compuation. All values are displayed in hex. |
+|`VAL` | Displays all values which are relevant for computation. All values are displayed in hex. |
 |`RUN` | Switches to graphics mode and starts a new calculation using the selected graphics mode. The calculation can be interrupted by a key press and can be resumed with `CNT`|
 |`LOD` | Loads a picture from the floppy drive and displays it. Press any key to return to the CLI. The device number can be changed by the `DEV` command.| 
 |`SAV` | Saves a picture to a floppy disc. The device number can be changed by the `DEV` command. |
@@ -21,7 +21,7 @@ interface and offers the following commands:
 |`HIR` | Switch to hires mode. As this mode has double the resolution in X direction, you may have to use the `HVX` command to halve the stepping width in X direction in order to preserve the aspect ratio of the picture.|
 |`HVX` | Halves the stepping width in X direction. |
 |`RES` | Resets the computation values to the default, i.e. the classic Mandelbrot set picture. The stepping width is adapted to the current graphics mode. |
-|`DEV` | Allwos to set the device number used for load and save to a value between 8 and 11. |
+|`DEV` | Allows to set the device number used for load and save to a value between 8 and 11. |
 |`SCL` | This allows to set the four colours which are used for colouring the picture. |
 |`GCL` | Displays the four colours which are used for colouring the picture. |
 |`SXL` | As `PXL` this allows to change the upper left corner used for the next calculation. In contrast to `PXL` this command allows to select the pixel via a crosshair controlled by the joystick in port 2. |
