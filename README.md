@@ -8,5 +8,7 @@ interface and offers the following commands:
 
 | Command | Comment |
 |-|-|
-|`VAL` | Displays all values which are relevant for compuation|
-
+|`VAL` | Displays all values which are relevant for compuation. All values are displayed in hex|
+|`RUN` | Switches to graphics mode and starts new calculation using the select graphics mode |
+|`LOD` | Loads a picture from the floppy drive. The device number can be changed | 
+|`SAV` | Saves a picture to a floppy disc. The device number can be changed | 
