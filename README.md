@@ -16,3 +16,7 @@ interface and offers the following commands:
 |`PXL` | Allows to enter the coordinates of a pixel, that serves as the new upper left corner to be used during the next calculation. |
 |`INZ` | Increases the zoom level by halving the stepping width in X and Y direction. |
 |`MCL` | Switch to multicolour mode. As this mode only has half of the resolution in X direction, you may have to use the `DBX` command to double the stepping width in X direction in order to preserve the aspect ratio of the picture. |
+|`DBX` | This command doubles the stepping width in X direction. |
+|`SIT` | This command allows to set the maximum number of iterations to be performed. The new value has to be <= 254. |
+|`HIR` | Switch to hires mode. As this mode has double the resolution in X direction, you may have to use the `HVX` command to halve the stepping width in X direction in order to preserve the aspect ratio of the picture.|
+|`HVX` | Halves the stepping width in X direction. |
