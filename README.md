@@ -30,3 +30,12 @@ interface and offers the following commands:
 |`DSC` | Displays a help message for the selected command. |
 |`H`| Displays a list of all commands. |
 |`X`| Exits MANDELCALC. |
+
+# Contents of disc image
+
+|Filename| Comment|
+|-|-|
+|`LOADER.PRG`| A program that loads the main program. |
+|`MANDELBR.PRG`| The main program. |
+|`MDEFAULT.PIC`| The classic Mandelbrot picture in multicolor mode. |
+|`HDEFAULT.PIC`| The classic Mandelbrot picture in hires mode. |
