@@ -20,3 +20,5 @@ interface and offers the following commands:
 |`SIT` | This command allows to set the maximum number of iterations to be performed. The new value has to be <= 254. |
 |`HIR` | Switch to hires mode. As this mode has double the resolution in X direction, you may have to use the `HVX` command to halve the stepping width in X direction in order to preserve the aspect ratio of the picture.|
 |`HVX` | Halves the stepping width in X direction. |
+|`RES` | Resets the computation values to the default, i.e. the classic Mandelbrot set picture. The stepping width is adapted to the current graphics mode. |
+|`DEV` | Allwos to set the device number to  value between 8 and 11. |
