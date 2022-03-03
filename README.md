@@ -50,6 +50,9 @@ Releases contain a D64 disk image which holds the following files:
 |`MDEFAULT.PIC`| The classic Mandelbrot picture in multicolor mode. |
 |`HDEFAULT.PIC`| The classic Mandelbrot picture in hires mode. |
 
+After mounting the disk image (in drive 8) use `LOAD "LOADER.PRG",8` and after that 
+`RUN` to start MANDELCALC.
+
 # Building MANDELCALC
 
 In order to build MANDELCALC you need to install the ACME Makroassembler. The makefile also
