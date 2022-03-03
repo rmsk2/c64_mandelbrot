@@ -41,6 +41,8 @@ Example picture in multicolor mode:
 
 # Contents of disc image
 
+Releases contain a D64 disk image which holds the following files:
+
 |Filename| Comment|
 |-|-|
 |`LOADER.PRG`| A program that loads the main program. |
@@ -55,4 +57,4 @@ builds a disk image. For this the tool `c1541` is used that is distributed as pa
 emulator. 
 
 If you want to build MANDELCALC on a Mac you have to adapt the makefile in such a way that the
-paths to ACME and `c1541` reflect the situation on your system. 
+paths to ACME and `c1541` reflect the situation on your system.  
