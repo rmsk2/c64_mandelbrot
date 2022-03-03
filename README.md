@@ -39,3 +39,12 @@ interface and offers the following commands:
 |`MANDELBR.PRG`| The main program. |
 |`MDEFAULT.PIC`| The classic Mandelbrot picture in multicolor mode. |
 |`HDEFAULT.PIC`| The classic Mandelbrot picture in hires mode. |
+
+# Building MANDELCALC
+
+In order to build MANDELCALC you need to install the ACME Makroassembler. The makefile also
+builds a disk image. For this the tool `c1541` is used that is distributed as part of the VICE
+emulator. 
+
+If you want to build MANDELCALC on a Mac you have to adapt the makefile in such a way that the
+paths to ACME and `c1541` reflect the situation on your system. 
