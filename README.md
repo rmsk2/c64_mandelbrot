@@ -31,6 +31,8 @@ interface and offers the following commands:
 |`H`| Displays a list of all commands. |
 |`X`| Exits MANDELCALC. |
 
+Example pictures:
+
 ![](/example_hires.png?raw=true "Example picture in hires mode")
 ![](/example_multicolor.png?raw=true "Example picture in multicolor mode")
 
