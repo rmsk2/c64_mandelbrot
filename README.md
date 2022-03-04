@@ -3,8 +3,8 @@
 MANDELCALC is a program that allows to generate visualisations of the Mandelbrot set on the C64. 
 It utilizes fixed point arithmetic instead of the floating point routines contained in the BASIC-ROM
 and can use both the multiciolor mode (having a 160x200 resolution in four colours) and
-the hires mode (320x200 pixels in two colors). The user interface is inspired by a command line
-interface and offers the following commands:
+the hires mode (320x200 pixels in two colors). By default the hires mode is active. The user 
+interface is inspired by a command line interface and offers the following commands:
 
 | Command | Comment |
 |-|-|
@@ -60,4 +60,5 @@ builds a disk image. For this the tool `c1541` is used that is distributed as pa
 emulator. 
 
 If you want to build MANDELCALC on a Mac you have to adapt the makefile in such a way that the
-paths to ACME and `c1541` reflect the situation on your system.  
+paths to ACME and `c1541` reflect the situation on your system. Additionally you have to define
+the variable `MAC` when exeuting `make`, i.e. you have to use for instance `make MAC=1`.
