@@ -3,7 +3,7 @@
 MANDELCALC is a program that allows to generate visualisations of the Mandelbrot set on the C64. 
 It utilizes fixed point arithmetic instead of the floating point routines contained in the BASIC-ROM
 and can use both the multiciolor mode (having a 160x200 resolution in four colours) and
-the hires mode (320x200 pixels in two colors). By default the hires mode is active. The user 
+the hires mode (320x200 pixels in two colours). By default the hires mode is active. The user 
 interface is inspired by a command line interface and offers the following commands:
 
 | Command | Comment |
@@ -62,3 +62,11 @@ emulator.
 If you want to build MANDELCALC on a Mac you have to adapt the makefile in such a way that the
 paths to ACME and `c1541` reflect the situation on your system. Additionally you have to define
 the variable `MAC` when exeuting `make`, i.e. you have to use for instance `make MAC=1`.
+
+# Tips
+
+- Increasing the maximum number of iterations yields a mathematically more accurate result but creates not necessarily more interesting pictures. Most pictures I like have been computed with an iteration depth between 24 and 40.
+- If you want to change the device number the loader program uses, modify the value of the variable `DEFAULT_DRIVE` in `loader.a`.
+- When finished the programm beeps `ENDE ENDE ENDE` in morse code
+- If you are using VICE you can get faster results by running MANDELCALC with `xscpu64` which emulates a C64 with an up to 20 times faster CPU. If you want most features to work correctly when using the super CPU you have to uncomment the line `;SUPER_CPU = 1` in `main.a`. If you use the "stock" version of MANDELCALC with the super CPU the `SXL` command becomes more or less unusable. Even when building MANDELCALC in super CPU mode the morse code timing will not be corrected.
+    
