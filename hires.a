@@ -290,7 +290,7 @@ setPoint
 
     ; load byte offset in 8x8 pixel tile
     ldy .MOD8_Y_POS
-    ; load bit mask in byte
+    ; load offset of bit mask in byte
     ldx .MOD8_X_POS
     ; set pixel
     lda (ADDR_POINTER),y
