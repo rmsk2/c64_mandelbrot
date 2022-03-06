@@ -193,41 +193,7 @@ PLOT_POS_Y
 PLOT_COL
 !byte 0
 
-; --------------------------------------------------
-; This routine sets a point in the multixolor bitmap. Inefficient but sufficient ;-)
-; 
-; PLOT_POS_X            has to contain the x position of the point
-; PLOT_POS_Y            has to contain the y position of the point
-; PLOT_COL              has to contain the number of the color (0-3)
-; --------------------------------------------------
-setPointMulticolor
-    lda #0
-    sta PLOT_POS_X+1                                ; clear hi byte of POS_X
-    +double16Bit PLOT_POS_X                         ; Multiply xpos by two
-    lda PLOT_COL                  
-    and #1                                          ; is bit 0 in color number set?
-    beq .skipPixelOne                               ; No => do not plot. Look at bit 1
-    jsr setPoint                                    ; Yes => set first bit
-.skipPixelOne
-    lda PLOT_COL                                    ; is bit 1 of color number set?
-    and #2
-    beq .skipPixelTwo                               ; No => do not plot
-    +inc16Bit PLOT_POS_X                            ; select pixel to the right
-    jsr setPoint                                    ; set it
-.skipPixelTwo
-    rts
 
-; prevent Assembling buggy JMP($xxff) instruction in repl.a and main.a
-;
-; The original 6502 processor has a bug: When executing an indirect
-; JMP instruction where the low byte of the argument equals $ff, it
-; fetches the high byte of the jump target address not from memory
-; location ARGUMENT+1, but from ARGUMENT-255. Therefore ACME issues
-; this warning if you are about to generate such an instruction.
-!skip 4
-
-.BIT_TAB
-!byte 128, 64, 32, 16, 8, 4, 2, 1
 ; lo byte of 0,1,2,3,4,5, ... , 24 * 320
 .LINE_OFFSET_LSB
 !byte 0, 64, 128, 192, 0, 64, 128, 192, 0, 64, 128, 192, 0, 64, 128, 192, 0, 64, 128, 192, 0, 64, 128, 192, 0
@@ -247,12 +213,18 @@ setPointMulticolor
 .PLOT_BYTE_OFFSET
 !byte 0,0
 ; --------------------------------------------------
-; This routine sets a point in the hires bitmap. 
+; This routine calculates the address of a bit/point on the bitmap 
 ; 
+; Input:
 ; PLOT_POS_X            address of lo byte of the x position of the point
 ; PLOT_POS_Y            address where y position of the point is stored
+;
+; Output:
+; ADDR_POINTER/ADDR_POINTER+1   The base address of the 8x8 tile which contains the point 
+; Y-Register                    The byte offset of the point in the 8x8 tile
+; X-Register                    The bit number in the byte referenced by y that corresponds to the point 
 ; --------------------------------------------------
-setPoint
+calcBitmapAddr
     ; PLOT_POS_X mod 8 => *.MOD8_X_POS
     lda PLOT_POS_X
     and #%00000111
@@ -292,9 +264,60 @@ setPoint
     ldy .MOD8_Y_POS
     ; load offset of bit mask in byte
     ldx .MOD8_X_POS
+    rts
+
+
+.BIT_TAB
+!byte 128, 64, 32, 16, 8, 4, 2, 1
+; --------------------------------------------------
+; This routine sets a point on the bitmap 
+; 
+; Input:
+; PLOT_POS_X            address of lo byte of the x position of the point
+; PLOT_POS_Y            address where y position of the point is stored
+; --------------------------------------------------
+setPoint
+    jsr calcBitmapAddr
     ; set pixel
     lda (ADDR_POINTER),y
     ora .BIT_TAB,x
     sta (ADDR_POINTER),y
 
+    rts
+
+
+
+.NUM_SHIFT_TAB
+!byte 3,3,2,2,1,1,0,0
+.MULTICOL_MASK
+!byte 0
+; --------------------------------------------------
+; This routine sets a point in the multixolor bitmap.
+; 
+; PLOT_POS_X            has to contain the x position of the point
+; PLOT_POS_Y            has to contain the y position of the point
+; PLOT_COL              has to contain the number of the color (0-3)
+; --------------------------------------------------
+setPointMulticolor
+    lda #0
+    sta PLOT_POS_X+1                                ; clear hi byte of POS_X
+    +double16Bit PLOT_POS_X                         ; Multiply xpos by two
+
+    jsr calcBitmapAddr                              ; calculate target byte and offsets
+    lda .NUM_SHIFT_TAB, x                           ; number of shifts necessary
+    tax                                             ; move that to the x register
+    lda PLOT_COL
+    ; shift color mask the necessary number of positions
+.loopShiftMask
+    cpx #0
+    beq .doneShift
+    asl
+    asl
+    dex
+    jmp .loopShiftMask
+.doneShift
+    sta .MULTICOL_MASK
+    lda (ADDR_POINTER), y
+    ora .MULTICOL_MASK
+    sta (ADDR_POINTER), y
     rts
