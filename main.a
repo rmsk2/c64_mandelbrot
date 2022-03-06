@@ -87,7 +87,7 @@ MAX_ITER
 ; Colours used for hires bitmap graphics. This value is written to the screen RAM
 ; as colour information
 PIC_COLOURS
-!byte $15
+!byte $51
 
 THIRD_COLOUR
 !byte $03
