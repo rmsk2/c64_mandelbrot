@@ -289,6 +289,11 @@ setPoint
 
 .NUM_SHIFT_TAB
 !byte 3,3,2,2,1,1,0,0
+; The original code had an oddity which had the consequence
+; that colors 1 and 2 are switched, in order to conserve the color
+; scheme we reimplement this "feature".
+.COL_TRANS_TAB
+!byte 0, 2, 1, 3
 .MULTICOL_MASK
 !byte 0
 ; --------------------------------------------------
@@ -302,12 +307,17 @@ setPointMulticolor
     lda #0
     sta PLOT_POS_X+1                                ; clear hi byte of POS_X
     +double16Bit PLOT_POS_X                         ; Multiply xpos by two
+    
+    ; transform color values
+    ldy PLOT_COL
+    lda .COL_TRANS_TAB, y
+    sta .MULTICOL_MASK
 
     jsr calcBitmapAddr                              ; calculate target byte and offsets
     lda .NUM_SHIFT_TAB, x                           ; number of shifts necessary
     tax                                             ; move that to the x register
-    lda PLOT_COL
     ; shift color mask the necessary number of positions
+    lda .MULTICOL_MASK
 .loopShiftMask
     cpx #0
     beq .doneShift
