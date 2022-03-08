@@ -8,7 +8,6 @@ COLOR_RAM = $D800
 
 ADDR_POINTER = $9E;/$9F
 ADDR_POINTER2 = $03;/$04
-ZP_HELPADR1 = ADDR_POINTER2
 
 !macro memsetImmediate .val, .startAddr, .numBlocks {
     lda #.val
