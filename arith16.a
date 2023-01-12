@@ -442,10 +442,10 @@ mul32BitUnsignedInternal
     lda #0
     sta COUNT_L                   ; clear counter for digits of left operand
     sta COUNT_R                   ; clear counter for digits of right operand
-    lda #<TEMP_MUL                ; set temp buffer address 
-    sta ARITH_SCRATCH9
-    lda #>TEMP_MUL
-    sta ARITH_SCRATCH9+1
+    ; lda #<TEMP_MUL                ; set temp buffer address 
+    ; sta ARITH_SCRATCH9
+    ; lda #>TEMP_MUL
+    ; sta ARITH_SCRATCH9+1
     ldx #7                        ; clear temp buffer
     lda #0
 .clear                            
@@ -457,10 +457,12 @@ mul32BitUnsignedInternal
     ldy COUNT_L
     iny                           ; skip sign byte
     lda (ARITH_SCRATCH5), y       ; load COUNT_L digit of left operand 
+    beq .noExtraCarry
     tax                           ; and store it in X register
     ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
     iny                           ; skip sign byte
     lda (ARITH_SCRATCH7), y
+    beq .noExtraCarry
     jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
     lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
@@ -468,21 +470,21 @@ mul32BitUnsignedInternal
     adc COUNT_R                   ; This position is COUNT_L + COUNT_R
     tay                           ; move calculated index to y register
     txa                           ; move LSB of multiplication result to accu
-    clc    
-    adc (ARITH_SCRATCH9), y       ; add LSB to intermediate result
-    sta (ARITH_SCRATCH9), y
+    ;clc                          ; Carry is always clear due to the addition of COUNT_L and COUNT_R
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
     iny
     lda HELP_MUL                  ; add MSB to intermediate result
-    adc (ARITH_SCRATCH9), y
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     bcc .noExtraCarry
 .carryLoop
     iny
     cpy #8                        
     beq .noExtraCarry             ; we are beyond the final byte. In this case ignore carry
     lda #1                        ; add carry to intermediate result
-    adc (ARITH_SCRATCH9), y
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     bcs .carryLoop
 .noExtraCarry
     inc COUNT_L                   ; Move processing to next digit of left operand
@@ -498,30 +500,6 @@ mul32BitUnsignedInternal
 
     rts
 
-
-; --------------------------------------------------
-; This subroutine pulls the addresses of the two operands from the parameter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
-; and multplies them. This routine ignores the sign bytes.
-;
-; It then multiplies the result and normalizes it as a fixed point value of the correct format
-; of 8 bits before the comma and 24 after the comma. The result is stored in the address given by ARITH_SCRATCH7
-; --------------------------------------------------
-mul32BitNormalizedUnsigned
-    +getParameters ADDR_OPER_LEFT, ADDR_OPER_RIGHT, ARITH_SCRATCH5, ARITH_SCRATCH7
-mul32BitNormalizedUnsignedInternal
-    jsr mul32BitUnsignedInternal
-
-    ; copy bytes 3,4,5,6 from TEMP_MUL
-    ; to bytes 1,2,3,4 of (ARITH_SCRATCH7)
-    ldy #1
-.loopNorm
-    lda TEMP_MUL+2, y
-    sta (ARITH_SCRATCH7), y
-    iny
-    cpy #5
-    bne .loopNorm
-
-    rts
 
 ; --------------------------------------------------
 ; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
@@ -764,7 +742,19 @@ mul32BitNormalized
     lda (ARITH_SCRATCH5),y                ; set sign of result
     eor (ARITH_SCRATCH7),y
     sta (ARITH_SCRATCH7),y
-    jsr mul32BitNormalizedUnsignedInternal
+
+    jsr mul32BitUnsignedInternal
+
+    ; copy bytes 3,4,5,6 from TEMP_MUL
+    ; to bytes 1,2,3,4 of (ARITH_SCRATCH7)
+    ldy #1
+.loopNorm2
+    lda TEMP_MUL+2, y
+    sta (ARITH_SCRATCH7), y
+    iny
+    cpy #5
+    bne .loopNorm2
+
     rts
 
 !macro callFunc .func, .addrL, .addrR {

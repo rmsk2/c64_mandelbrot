@@ -73,4 +73,4 @@ the variable `MAC` when exeuting `make`, i.e. you have to use for instance `make
 
 # Performance
 
-To calculate a viusalization of the default section of the Mandelbrot set using the default maximum iteration depth of 24 in multicolor mode takes about one hour and 15 minutes. Using the maximum depth of 254 the same calculation is completed in eight hours and 50 minutes. In hires mode the visualization of the default section with a maximum iteration depth of 24 is done within two hours and 30 minutes. 
+To calculate a viusalization of the default section of the Mandelbrot set using the default maximum iteration depth of 24 in multicolor mode takes about 47 minutes. In hires mode the visualization of the default section with a maximum iteration depth of 24 is done within an hour and 40 minutes. 
