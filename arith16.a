@@ -434,7 +434,7 @@ HELP_MUL
 ; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
 ; It multiplies its operands as if they were unsigned 32 bit integers.
 ;
-; The result is returned in the address to which ARITH_SCRATCH9/ARITH_SCRATCH10 points 
+; The result is returned in the eight byte buffer starting at TEMP_MUL. 
 ; --------------------------------------------------
 mul32BitUnsigned
     +getParameters ADDR_OPER_LEFT, ADDR_OPER_RIGHT, ARITH_SCRATCH5, ARITH_SCRATCH7
@@ -501,7 +501,12 @@ mul32BitUnsignedInternal
     rts
 
 
-
+; --------------------------------------------------
+; This subroutine pulls the address of its operand from the parameter block ADDR_OPER_LEFT.
+; It squares its operand as if it was an unsigned 32 bit integer.
+;
+; The result is returned in the eight byte buffer starting at TEMP_MUL. 
+; --------------------------------------------------
 square32BitUnsigned
     lda ADDR_OPER_LEFT
     sta ARITH_SCRATCH5
@@ -847,22 +852,27 @@ mul32BitNormalized
     rts
 
 
+; --------------------------------------------------
+; This subroutine pulls the address of its operand from the parameter block ADDR_OPER_LEFT.
+; The routine squres its operand and handles the sign correctly.
+;
+; The result is returned in the operand, i.e. *opL <- *opL * *opL 
+; --------------------------------------------------
 square32BitNormalized
     lda ADDR_OPER_LEFT
     sta ARITH_SCRATCH5
     lda ADDR_OPER_LEFT+1 
     sta ARITH_SCRATCH5+1
 
-    ; The sign of the result is - if the signs of the two operands are different
-    ; and + otherwise. I.e. the result sign bit is the XOR of the two original sign bits
+    ; The sign of the result always positive
     lda #0
     ldy #0
-    sta (ARITH_SCRATCH5), y                  ; sign is always positive
+    sta (ARITH_SCRATCH5), y                 
 
     jsr square32BitUnsignedInternal
 
     ; copy bytes 3,4,5,6 from TEMP_MUL
-    ; to bytes 1,2,3,4 of (ARITH_SCRATCH7)
+    ; to bytes 1,2,3,4 of (ARITH_SCRATCH5)
     ldy #1
 .loopNorm3
     lda TEMP_MUL+2, y
