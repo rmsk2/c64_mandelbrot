@@ -501,6 +501,95 @@ mul32BitUnsignedInternal
     rts
 
 
+
+square32BitUnsigned
+    lda ADDR_OPER_LEFT
+    sta ARITH_SCRATCH5
+    lda ADDR_OPER_LEFT+1 
+    sta ARITH_SCRATCH5+1
+square32BitUnsignedInternal
+    lda #0
+    sta COUNT_L                   ; clear counter for digits of left operand
+    sta COUNT_R                   ; clear counter for digits of right operand
+    ldx #7                        ; clear temp buffer
+    lda #0
+.squareClear                            
+    sta TEMP_MUL,X
+    dex
+    bpl .squareClear
+
+.loopSquare
+    lda #1
+    sta ARITH_SCRATCH7
+
+    ldy COUNT_L
+    cpy COUNT_R
+    bne .squareNormal
+    iny                           ; skip sign byte
+    lda (ARITH_SCRATCH5), y       ; load COUNT_L digit of left operand 
+    beq .noExtraCarrySquare
+    tay
+    lda SQ_TAB_LSB, y
+    tax
+    lda SQ_TAB_MSB, y
+    dec ARITH_SCRATCH7
+    jmp .processResult
+.squareNormal
+    iny                           ; skip sign byte
+    lda (ARITH_SCRATCH5), y       ; load COUNT_L digit of left operand 
+    beq .noExtraCarrySquare
+    tax                           ; and store it in X register
+    ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
+    iny                           ; skip sign byte
+    lda (ARITH_SCRATCH5), y
+    beq .noExtraCarrySquare
+    jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+.processResult
+    sta HELP_MUL                  ; store MSB of multiplication result in temp variable
+.addTwice    
+    lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
+    clc
+    adc COUNT_R                   ; This position is COUNT_L + COUNT_R
+    tay                           ; move calculated index to y register
+    txa                           ; move LSB of multiplication result to accu
+    ;clc                          ; Carry is always clear due to the addition of COUNT_L and COUNT_R
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
+    iny
+    lda HELP_MUL                  ; add MSB to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    bcc .checkDoubleAdd
+.carryLoopSquare
+    iny
+    cpy #8                        
+    beq .noExtraCarrySquare       ; we are beyond the final byte. In this case ignore carry
+    lda #1                        ; add carry to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    bcs .carryLoopSquare
+.checkDoubleAdd
+    dec ARITH_SCRATCH7
+    bne .noExtraCarrySquare
+    jmp .addTwice
+.noExtraCarrySquare
+    inc COUNT_L                   ; Move processing to next digit of left operand
+    lda COUNT_L
+    cmp COUNT_R
+    beq .loopSquare
+    bcc .loopSquare
+.nextDigit
+    lda #0                        ; Move processing to next digit of right operand
+    sta COUNT_L
+    inc COUNT_R
+    lda COUNT_R
+    cmp #4
+    beq .squareDone
+    jmp .loopSquare
+.squareDone
+    rts
+
+
 ; --------------------------------------------------
 ; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and compares its two operands. This routine ignores the sign byte it only compares the absolute values.
@@ -756,6 +845,33 @@ mul32BitNormalized
     bne .loopNorm2
 
     rts
+
+
+square32BitNormalized
+    lda ADDR_OPER_LEFT
+    sta ARITH_SCRATCH5
+    lda ADDR_OPER_LEFT+1 
+    sta ARITH_SCRATCH5+1
+
+    ; The sign of the result is - if the signs of the two operands are different
+    ; and + otherwise. I.e. the result sign bit is the XOR of the two original sign bits
+    lda #0
+    ldy #0
+    sta (ARITH_SCRATCH5), y                  ; sign is always positive
+
+    jsr square32BitUnsignedInternal
+
+    ; copy bytes 3,4,5,6 from TEMP_MUL
+    ; to bytes 1,2,3,4 of (ARITH_SCRATCH7)
+    ldy #1
+.loopNorm3
+    lda TEMP_MUL+2, y
+    sta (ARITH_SCRATCH5), y
+    iny
+    cpy #5
+    bne .loopNorm3
+
+    rts    
 
 !macro callFunc .func, .addrL, .addrR {
     +load16BitImmediate .addrL, ADDR_OPER_LEFT

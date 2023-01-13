@@ -231,11 +231,11 @@ testMandelbrotDone
     ; XN_SQUARE <= XN
     +callFunc move32Bit, XN, XN_SQUARE
     ; XN_SQUARE <= XN_SQUARE * XN_SQUARE
-    +callFunc mul32BitNormalized, XN_SQUARE, XN_SQUARE
+    +callFuncMono square32BitNormalized, XN_SQUARE
     ; YN_SQUARE <= YN
     +callFunc move32Bit, YN, YN_SQUARE
     ; YN_SQUARE <= YN_SQUARE * YN_SQUARE
-    +callFunc mul32BitNormalized, YN_SQUARE, YN_SQUARE
+    +callFuncMono square32BitNormalized, YN_SQUARE
     ; TEMP_MAX <= XN_SQUARE
     +callFunc move32Bit, XN_SQUARE, TEMP_MAX
     ; TEMP_MAX <= YN_SQUARE + TEMP_MAX
