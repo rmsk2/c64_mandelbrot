@@ -142,6 +142,12 @@ showTitleScreen
 !byte CMD_LEN
 !tx "DIR"
 
+!ifdef ITER_COUNT {
+.ITER_COUNT_COMMAND
+!byte CMD_LEN
+!tx "ICT"
+}
+
 
 .HELP_COMMAND
 !byte 1
@@ -192,6 +198,9 @@ showTitleScreen
 !byte <.CONTINUE_CALC_COMMAND, >.CONTINUE_CALC_COMMAND, <continueCommand, >continueCommand
 !byte <.DIR_COMMAND, >.DIR_COMMAND, <dirCommand, >dirCommand
 !byte <.DESCRIBE_COMMAND, >.DESCRIBE_COMMAND, <describeCommand, >describeCommand
+!ifdef ITER_COUNT {
+!byte <.ITER_COUNT_COMMAND, >.ITER_COUNT_COMMAND, <iterCountCmd, >iterCountCmd    
+}
 !byte <.HELP_COMMAND, >.HELP_COMMAND, <helpCommand, >helpCommand
 !ifdef INCLUDE_DIAG {
 !byte <.TEST_COMMAND, >.TEST_COMMAND, <testMorse, >testMorse    
@@ -287,6 +296,14 @@ processCommand
 !byte 9
 !tx "DEVICE: $"
 
+!ifdef ITER_COUNT {
+; --------------------------------------------------
+; Iteration count command
+; --------------------------------------------------
+iterCountCmd
+    +printByteVector ITER_CNT
+    rts
+}
 
 ; --------------------------------------------------
 ; showValuesCommand
@@ -1638,6 +1655,14 @@ morseEnde
 !tx "SELECTED COMMAND"
 !byte $0d,$0a ; 50
 
+!ifdef ITER_COUNT {
+.ICT_HELP_TEXT
+!byte 37
+!tx "SHOW NUMBER OF PERFORMED ITERATIONS"
+!byte $0d,$0a
+}
+
+
 
 .HLP_TABLE 
 !byte <.VAL_COMMAND, >.VAL_COMMAND, <.VAL_HELP_TEXT, >.VAL_HELP_TEXT
@@ -1658,6 +1683,9 @@ morseEnde
 !byte <.SHOW_COLS_COMMAND, >.SHOW_COLS_COMMAND, <.GCL_HELP_TEXT, >.GCL_HELP_TEXT
 !byte <.CONTINUE_CALC_COMMAND, >.CONTINUE_CALC_COMMAND, <.CNT_HELP_TEXT, >.CNT_HELP_TEXT
 !byte <.DIR_COMMAND, >.DIR_COMMAND, <.DIR_HELP_TEXT, >.DIR_HELP_TEXT
+!ifdef ITER_COUNT {
+!byte <.ITER_COUNT_COMMAND, >.ITER_COUNT_COMMAND, <.ICT_HELP_TEXT, >.ICT_HELP_TEXT
+}
 !byte <.SELECT_PIXEL_COMMAND, >.SELECT_PIXEL_COMMAND, <.SXL_HELP_TEXT, >.SXL_HELP_TEXT
 !byte <.DESCRIBE_COMMAND, >.DESCRIBE_COMMAND, <.DSC_HELP_TEXT, >.DSC_HELP_TEXT
 !byte 0,0,0,0 ; end marker

@@ -16,6 +16,31 @@ LO_NIBBLE
 !byte 0
 
 ; --------------------------------------------------
+; This routine prints a 32 bit unsigned number to the screen. The address
+; of the number has to be given in $0003/$0004
+;
+; No other values are returned. 
+; --------------------------------------------------
+printByteVectorCall
+    ldy #4
+.loopPrintVec
+    lda (TEMP_PTR), y
+    jsr printByte
+    dey
+    bne .loopPrintVec
+    jsr printCRLF
+    rts
+
+!macro printByteVector .addr {
+    lda #<.addr
+    sta TEMP_PTR
+    lda #>.addr
+    sta TEMP_PTR+1
+    jsr printByteVectorCall
+} 
+
+
+; --------------------------------------------------
 ; This routine prints a fixed point number to the screen. The address
 ; of the number has to be given in $0003/$0004
 ;

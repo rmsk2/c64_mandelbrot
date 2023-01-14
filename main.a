@@ -3,6 +3,7 @@
 FAST_MUL = 1
 ;SUPER_CPU = 1
 CLOCK_50_HZ = 1
+;ITER_COUNT = 1
 
 
 *=$4500
@@ -70,6 +71,9 @@ turnBitmapOn
     jmp (BITMAP_ON_VECTOR)
 
 resetParameters
+!ifdef ITER_COUNT {
+    +callFuncMono clear32Bit, ITER_CNT
+}
     jmp (RESET_PARAMS_VECTOR)
 
 transformXCoord
@@ -150,6 +154,14 @@ COUNT_Y
 ; --------------------------------------------------
 ; variables used for calculation
 ; --------------------------------------------------
+
+!ifdef ITER_COUNT {
+ITER_CNT
+!byte 0,0,0,0,0 
+
+PLUS_ONE
+!byte 0,1,0,0,0
+}
 
 REAL
 !byte 0,2,0,0,0
@@ -273,6 +285,9 @@ calcOneMandelbrotSequence
     +callFunc move32Bit, IMAG, YN
 
 .loopMandelbrot
+!ifdef ITER_COUNT {
+    +callFunc add32BitUnsigned, PLUS_ONE, ITER_CNT
+}
     jsr testMandelbrotDone
     beq .continueMandelbrot
     jmp .endMandelbrot
@@ -327,6 +342,10 @@ initMandel
     ; reset complex numbers
     +callFunc move32Bit, INIT_REAL, REAL
     +callFunc move32Bit, INIT_IMAG, IMAG
+
+!ifdef ITER_COUNT {
+    +callFuncMono clear32Bit, ITER_CNT
+}
 
     rts
 

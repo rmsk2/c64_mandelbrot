@@ -337,6 +337,25 @@ ADDR_OPER_RIGHT
 !byte 0,0
 
 ; --------------------------------------------------
+; This subroutine pulls the address of its operand from the parameter block ADDR_OPER_LEFT and clears
+; it, i.e. sets its value to +0
+; --------------------------------------------------
+clear32Bit
+    lda ADDR_OPER_LEFT
+    sta ARITH_SCRATCH1
+    lda ADDR_OPER_LEFT+1 
+    sta ARITH_SCRATCH1+1
+
+    ldy #4
+    lda #0
+.loopClear32
+    sta (ARITH_SCRATCH1), y
+    dey
+    bpl .loopClear32
+    rts
+    
+
+; --------------------------------------------------
 ; This subroutine pulls the addresses of the two operands from the paramter blocks ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and adds its operands. This routine ignores the sign byte.
 ;
