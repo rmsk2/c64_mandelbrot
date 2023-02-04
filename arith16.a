@@ -598,6 +598,15 @@ move32Bit
     rts
 
 
+!macro move32BitInline .src, .target {
+    ldy #4
+.loopMove
+    lda .src,y
+    sta .target,y
+    dey
+    bpl .loopMove
+}
+
 ; --------------------------------------------------
 ; This subroutine expects its operand in ARITH_SCRATCH1/2.
 ; The routine then doubles the value of its operand by simply performing a left shift. It
@@ -760,6 +769,12 @@ neg32
     eor #1
     sta (ARITH_SCRATCH1), y
     rts
+
+!macro neg32Inline .addr {
+    lda .addr
+    eor #1
+    sta .addr
+}
 
 ; --------------------------------------------------
 ; This subroutine expects its operands in ARITH_SCRATCH1/2 and ARITH_SCRATCH3/4.
