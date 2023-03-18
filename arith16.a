@@ -302,6 +302,10 @@ mul16Bit
 
 }
 
+!ifdef NEO_GEO_MUL {
+!source "neogeomul.a"
+}
+
 TEMP_SIGN
 !byte 0
 TEMP_VAL
@@ -421,7 +425,12 @@ mul32BitUnsigned
     iny                           ; skip sign byte
     lda (ARITH_SCRATCH3), y
     beq .noExtraCarry
+!ifndef NEO_GEO_MUL {
     jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+} else {
+    +neoGeo2048Lookup LOOKUP_SCRATCH1
+    ;jsr mul16BitNeoGeo2048
+}    
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
     lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
     clc
@@ -501,7 +510,12 @@ square32BitUnsigned
     iny                           ; skip sign byte
     lda (ARITH_SCRATCH1), y
     beq .noExtraCarrySquare
+!ifndef NEO_GEO_MUL {
     jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+} else {
+    +neoGeo2048Lookup LOOKUP_SCRATCH1
+    ;jsr mul16BitNeoGeo2048
+}    
 .processResult
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
 .addTwice    
@@ -535,7 +549,12 @@ square32BitUnsigned
     lda COUNT_L
     cmp COUNT_R
     beq .loopSquare
+!ifndef NEO_GEO_MUL {
     bcc .loopSquare
+} else {
+    bcs .nextDigit
+    jmp .loopSquare
+}   
 .nextDigit
     lda #0                        ; Move processing to next digit of right operand
     sta COUNT_L
@@ -775,6 +794,19 @@ neg32
     eor #1
     sta .addr
 }
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ARITH_SCRATCH1 and clears
+; it, i.e. sets its value tp +0
+; --------------------------------------------------
+clear32Bit
+    ldy #4
+    lda #0
+.loopClear
+    sta (ARITH_SCRATCH1), y
+    dey
+    bpl .loopClear
+    rts
 
 ; --------------------------------------------------
 ; This subroutine expects its operands in ARITH_SCRATCH1/2 and ARITH_SCRATCH3/4.

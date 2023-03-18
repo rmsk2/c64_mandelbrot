@@ -16,9 +16,20 @@ NUM_DELAY_LOOPS = 250
 }
 
 progStart
+!ifdef NEO_GEO_MUL {
+    +printStr .PRCOMP
+    jsr initArithmetic2048
+}
     jsr showTitleScreen
     jmp readEvalPrintLoop
 
+
+!ifdef NEO_GEO_MUL {
+.PRCOMP
+!byte 23
+!tx "PRECOMPUTING MUL TABLE"
+!byte $0d    
+}
 
 .TITLE_LINE_1
 !byte 38

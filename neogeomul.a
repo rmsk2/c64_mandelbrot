@@ -1,0 +1,111 @@
+
+
+TRACK_REG = $DFFE
+SECTOR_REG = $DFFF
+GEO_RAM = $DE00
+
+!macro moveGeoBuffer .addrTrack, .addrSector {
+    lda .addrTrack
+    sta TRACK_REG
+    lda .addrSector
+    sta SECTOR_REG
+}
+
+!macro moveGeoTrack .addrTrack {
+    lda .addrTrack
+    sta TRACK_REG
+}
+
+
+.GEO_ADDR
+!byte 0, 0
+
+.LCOUNT
+!byte 0
+.RCOUNT
+!byte 0
+
+.HI_MUL
+!byte 0
+.LO_MUL
+!byte 0
+
+
+!macro calcTrackSector .srcLo, .addrLo {
+    lda #0
+    sta .addrLo + 1
+    lda .srcLo
+    asl
+    sta .addrLo
+    rol .addrLo + 1
+    lsr .addrLo
+}
+
+; --------------------------------------------------
+; initArithmetic2048 sets up the multiplication table in the Neo/GeoRAM. All routines
+; in this file assume an extra 2MB of RAM. Any other size will not work!
+; --------------------------------------------------
+initArithmetic2048
+    lda #0
+    sta .LCOUNT
+    sta .RCOUNT
+
+.rightCount
+    ; Here .RCOUNT is always zero
+    lda .LCOUNT
+    ldx .RCOUNT
+    jsr mul16Bit
+    sta .HI_MUL
+    stx .LO_MUL
+
+    +calcTrackSector .LCOUNT, .GEO_ADDR
+    +moveGeoBuffer .GEO_ADDR+1, .GEO_ADDR
+    ldx .RCOUNT
+    lda .LO_MUL
+    sta GEO_RAM, x
+    lda #%00000010
+    ora .GEO_ADDR+1
+    sta .GEO_ADDR+1
+    +moveGeoTrack .GEO_ADDR+1
+    lda .HI_MUL
+    sta GEO_RAM, x
+
+    inc .RCOUNT
+    bne .rightCount
+
+    inc .LCOUNT
+    bne .rightCount                     
+
+    rts
+
+; --------------------------------------------------
+; neoGeo2048Lookup mutiplies the bytes contained in accu and x register 
+; The high byte of the result is returned in accu, the lo byte in the x register.
+; The macro parameter specifies temporary zero page location to use by the calculation.
+; --------------------------------------------------
+!macro neoGeo2048Lookup .zpAddr {
+    sta SECTOR_REG                                         ; cartridge masks out surplus bits
+    ldy #0
+    and #$80
+    beq .sevenNotSet
+    iny
+.sevenNotSet
+    sty TRACK_REG
+    sty .zpAddr
+    txa
+    tay
+    lda GEO_RAM, x
+    tax
+    lda .zpAddr
+    ora #%00000010
+    sta TRACK_REG
+    lda GEO_RAM, y    
+}
+
+; --------------------------------------------------
+; mul16BitNeoGeo2048 mutiplies the bytes contained in accu and x register 
+; The high byte of the result is returned in accu, the lo byte in the x register.
+; --------------------------------------------------
+mul16BitNeoGeo2048
+    +neoGeo2048Lookup LOOKUP_SCRATCH1
+    rts
